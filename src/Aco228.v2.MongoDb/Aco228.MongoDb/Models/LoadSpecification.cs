@@ -72,7 +72,7 @@ public class LoadSpecification<TDocument, TProjection>
 
     public LoadSpecification<TDocument, TProjection> OrderByProperty<TKey>(OrderDirection orderDirection, Expression<Func<TDocument, TKey>> keySelector)
     {
-        var memberExpression = (MemberExpression)keySelector.Body;
+        var memberExpression = keySelector.Body as MemberExpression ?? throw new ArgumentException("Expression must be a simple property access (e.g., x => x.PropertyName)", nameof(keySelector));
         if(orderDirection == OrderDirection.ASC)
             _sort = Builders<TDocument>.Sort.Ascending(memberExpression.Member.Name);
         else
@@ -94,14 +94,14 @@ public class LoadSpecification<TDocument, TProjection>
 
     public LoadSpecification<TDocument, TProjection> OrderByPropertyAsc<TKey>(Expression<Func<TDocument, TKey>> keySelector)
     {
-        var memberExpression = (MemberExpression)keySelector.Body;
+        var memberExpression = keySelector.Body as MemberExpression ?? throw new ArgumentException("Expression must be a simple property access (e.g., x => x.PropertyName)", nameof(keySelector));
         _sort = Builders<TDocument>.Sort.Ascending(memberExpression.Member.Name);
         return this;
     }
 
     public LoadSpecification<TDocument, TProjection> OrderByPropertyDesc<TKey>(Expression<Func<TDocument, TKey>> keySelector)
     {
-        var memberExpression = (MemberExpression)keySelector.Body;
+        var memberExpression = keySelector.Body as MemberExpression ?? throw new ArgumentException("Expression must be a simple property access (e.g., x => x.PropertyName)", nameof(keySelector));
         _sort = Builders<TDocument>.Sort.Descending(memberExpression.Member.Name);
         return this;
     }

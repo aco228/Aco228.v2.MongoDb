@@ -94,7 +94,7 @@ public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T
 
     private void TryExecute(bool force = false)
     {
-        if(!_insertRequests.Any()) return;
+        if(!_insertRequests.Any() && !_deleteRequests.Any()) return;
         if(!force && CurrentCount < _limit) return;
 
         if (_insertRequests.Any())
@@ -112,7 +112,7 @@ public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T
 
     private async Task TryExecuteAsync(bool force = false)
     {
-        if(!_insertRequests.Any()) return;
+        if(!_insertRequests.Any() && !_deleteRequests.Any()) return;
         if(!force && CurrentCount < _limit) return;
 
         if (_insertRequests.Any())

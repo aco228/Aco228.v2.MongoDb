@@ -11,33 +11,42 @@ public interface IMongoDbContext : IDisposable
 
 public abstract class MongoDbContext : IMongoDbContext
 {
+    private object _lock = new();
     private MongoClient? _client;
+    private IMongoDatabase? _database;
     public abstract string DatabaseName { get; }
     
     public IMongoDatabase GetDatabase()
     {
-        if (_client == null)
+        lock (_lock)
         {
-            MongoClientSettings settings = MongoClientSettings.FromConnectionString(GetConnectionString());
-            settings.RetryWrites = true;
-            settings.RetryReads = true;
-            settings.ServerApi = new ServerApi(ServerApiVersion.V1);
-            settings.SocketTimeout = TimeSpan.FromMinutes(5); // Adjust as needed
-            settings.ConnectTimeout = TimeSpan.FromSeconds(10); // Adjust as needed
-            settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(5);
-            settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(10);
-
-            settings = ConfigureClientSettings(settings);
-            _client = new MongoClient(settings);
-        }
+            if (_database != null)
+                return _database;
         
-        var pack = new ConventionPack
-        {
-            new IgnoreIfNullConvention(true)
-        };
+            if (_client == null)
+            {
+                MongoClientSettings settings = MongoClientSettings.FromConnectionString(GetConnectionString());
+                settings.RetryWrites = true;
+                settings.RetryReads = true;
+                settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+                settings.SocketTimeout = TimeSpan.FromMinutes(5); // Adjust as needed
+                settings.ConnectTimeout = TimeSpan.FromSeconds(10); // Adjust as needed
+                settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(5);
+                settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(10);
 
-        ConventionRegistry.Register("Ignore null values globally", pack, t => true);
-        return _client.GetDatabase(DatabaseName);
+                settings = ConfigureClientSettings(settings);
+                _client = new MongoClient(settings);
+            }
+        
+            var pack = new ConventionPack
+            {
+                new IgnoreIfNullConvention(true)
+            };
+
+            ConventionRegistry.Register("Ignore null values globally", pack, t => true);
+            _database = _client.GetDatabase(DatabaseName);
+            return _database;
+        }
     }
     
     
