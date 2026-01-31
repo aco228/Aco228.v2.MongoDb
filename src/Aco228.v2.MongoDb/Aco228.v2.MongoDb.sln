@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aco228.MongoDb", "Aco228.MongoDb\Aco228.MongoDb.csproj", "{F13D60D7-9712-4D80-BB4F-217D55A34295}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aco228.MongoDb.Consoler", "Aco228.MongoDb.Consoler\Aco228.MongoDb.Consoler.csproj", "{E975CD1A-421D-4E31-9518-8A2F709DD36B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aco228.Common", "..\..\..\Aco228.Common\src\Aco228.Common\Aco228.Common.csproj", "{1EFD1033-9925-4CAA-8B97-2552FD7F0DF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F13D60D7-9712-4D80-BB4F-217D55A34295}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F13D60D7-9712-4D80-BB4F-217D55A34295}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F13D60D7-9712-4D80-BB4F-217D55A34295}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F13D60D7-9712-4D80-BB4F-217D55A34295}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E975CD1A-421D-4E31-9518-8A2F709DD36B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E975CD1A-421D-4E31-9518-8A2F709DD36B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E975CD1A-421D-4E31-9518-8A2F709DD36B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E975CD1A-421D-4E31-9518-8A2F709DD36B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EFD1033-9925-4CAA-8B97-2552FD7F0DF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EFD1033-9925-4CAA-8B97-2552FD7F0DF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EFD1033-9925-4CAA-8B97-2552FD7F0DF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EFD1033-9925-4CAA-8B97-2552FD7F0DF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
