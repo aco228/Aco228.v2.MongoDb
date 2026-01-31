@@ -1,7 +1,5 @@
-﻿using Aco228.MongoDb.Extensions;
-using Aco228.MongoDb.Models;
+﻿using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Models.Attributes;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Aco228.MongoDb.Services;

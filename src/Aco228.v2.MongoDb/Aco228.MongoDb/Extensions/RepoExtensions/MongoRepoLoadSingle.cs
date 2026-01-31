@@ -11,7 +11,7 @@ public static class MongoRepoLoadSingle
         Expression<Func<TDocument, bool>> filter) 
         where TDocument : MongoDocument
     {
-        return repo.LoadStrategy().FilterBy(filter).Count();
+        return repo.Load().FilterBy(filter).Count();
     }
     
     public static Task<long> CountAsync<TDocument>(
@@ -19,25 +19,25 @@ public static class MongoRepoLoadSingle
         Expression<Func<TDocument, bool>> filter) 
         where TDocument : MongoDocument
     {
-        return repo.LoadStrategy().FilterBy(filter).CountAsync();
+        return repo.Load().FilterBy(filter).CountAsync();
     }
     
-    public static TDocument FirstOrDefault<TDocument>(
+    public static TDocument? FirstOrDefault<TDocument>(
         this IMongoRepo<TDocument> repo, 
         Expression<Func<TDocument, bool>> filter,
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.LoadStrategy().FilterBy(filter).Limit(limit).FirstOrDefault();
+        return repo.Load().FilterBy(filter).Limit(limit).FirstOrDefault();
     }
 
-    public static Task<TDocument> FirstOrDefaultAsync<TDocument>(
+    public static Task<TDocument>? FirstOrDefaultAsync<TDocument>(
         this IMongoRepo<TDocument> repo, 
         Expression<Func<TDocument, bool>> filter,
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.LoadStrategy().FilterBy(filter).Limit(limit).FirstOrDefaultAsync();
+        return repo.Load().FilterBy(filter).Limit(limit).FirstOrDefaultAsync();
     }
     
 }

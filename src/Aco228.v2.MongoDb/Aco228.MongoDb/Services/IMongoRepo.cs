@@ -1,6 +1,5 @@
 ﻿using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Models.Attributes;
-using Aco228.MongoDb.Strategies;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -17,8 +16,7 @@ public interface IMongoRepo<TDocument>
 
     public List<TDocument> LoadAll() => AsQueryable().ToList();
     public Task<List<TDocument>> LoadAllAsync() => AsQueryable().ToListAsync();
-    public RepoLoadStrategy<TDocument, TDocument> LoadStrategy() => new (this);
-    public RepoLoadSpecification<TDocument> Load() => new(this);
-    public RepoLoadStrategy<TDocument, TProject> Project<TProject>() where TProject : class => new (this);
+    public LoadSpecification<TDocument, TDocument> Load() => new(this);
+    public LoadSpecification<TDocument, TProjection> Project<TProjection>() where TProjection :  class => new(this);
     
 }

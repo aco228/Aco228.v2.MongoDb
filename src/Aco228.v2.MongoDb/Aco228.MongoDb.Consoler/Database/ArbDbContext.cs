@@ -3,19 +3,19 @@ using Aco228.MongoDb.Services;
 
 namespace Aco228.MongoDb.Consoler.Database;
 
-public interface ILocalDbContext : IMongoDbContext, ISingleton
+public interface IArbDbContext : IMongoDbContext, ISingleton
 {
     
 }
 
-public class LocalDbContext : MongoDbContext, ILocalDbContext 
+public class ArbDbContext : MongoDbContext, IArbDbContext 
 {
-    public override string DatabaseName => "DummyDatabase";
+    public override string DatabaseName => "ARB";
    
     
     protected override string GetConnectionString()
     {
-        var connectionString = Environment.GetEnvironmentVariable("LOCAL_MONGO_CONNECTION");
+        var connectionString = Environment.GetEnvironmentVariable("ARB_MONGO_CONNECTION");
         if (string.IsNullOrEmpty(connectionString))
             throw new ArgumentException($"Connection string missing");
         return connectionString;
