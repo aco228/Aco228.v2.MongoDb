@@ -21,7 +21,7 @@ var userRepo = serviceProvider.GetService<IMongoRepo<UserDocument>>()!;
 var tmng = userRepo.GetTransactionalManager().SetLimit(3);
 foreach (var user in userRepo.LoadAll())
 {
-    user.Spec = 17;
+    user.SetBck = Guid.NewGuid().ToString();
     tmng.InsertOrUpdate(user);
 }
 await tmng.FinishAsync();

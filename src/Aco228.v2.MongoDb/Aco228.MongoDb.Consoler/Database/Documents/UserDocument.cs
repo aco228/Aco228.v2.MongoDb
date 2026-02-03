@@ -14,8 +14,8 @@ public class UserDocument : MongoDocument
     public int SomeIndex { get; set; }
     public string SomeData { get; set; }
     
-    [MongoIndex(IsUnique = true)]
-    public int Spec { get; set; }
+    [MongoIndex]
+    public string SetBck { get; set; }
 }
 
 public class UserProjection

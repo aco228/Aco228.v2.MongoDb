@@ -1,5 +1,5 @@
-﻿using Aco228.Common.Extensions;
-using Aco228.MongoDb.Models;
+﻿using System.Reflection;
+using Aco228.Common.Extensions;
 using Aco228.MongoDb.Models.Attributes;
 using Aco228.MongoDb.Services;
 using MongoDB.Bson;
@@ -14,18 +14,28 @@ public static class MongoIndexesExtensions
         public string MongoName { get; set; }
         public string Name { get; set; }
     }
-    
-    public static async Task ConfigureIndexesAsync<TDocument>(this IMongoRepo<TDocument> repo)
-        where TDocument : MongoDocument
+
+    public static async Task ConfigureIndexes(IMongoDbContext dbContext, Type documentType)
     {
-        Console.WriteLine($"Configuring {typeof(TDocument).Name}");
+        var attribute = documentType.GetCustomAttribute<BsonCollectionAttribute>();
+        if (attribute == null)
+            return;
         
-        var indexProps = typeof(TDocument).GetPropertyWithAttribute<MongoIndexAttribute>();
+        if(documentType.IsInterface || documentType.IsAbstract)
+            return;
         
-        var collection = repo.GetCollection();
+        Console.WriteLine($"Configuring {documentType.Name}.{attribute.CollectionName}");
+        var indexProps = documentType.GetPropertyWithAttribute<MongoIndexAttribute>();
+        var collection = dbContext.GetDatabase().GetCollection<BsonDocument>(attribute.CollectionName);
+        if(collection == null)
+            return;
+        
         var currentIndexes = new List<MongoIndex>();
-        var indexes = (collection.Indexes.List() as IAsyncCursor<BsonDocument>).ToList() as List<BsonDocument>;
-        foreach (var indexName in indexes.Select(x => x["name"].ToString()))
+        
+        var indexes = (await collection.Indexes.ListAsync()) as IAsyncCursor<BsonDocument>;
+        var indexList = await indexes.ToListAsync();
+        
+        foreach (var indexName in indexList.Select(x => x["name"].ToString()))
         {
             if (indexName == "_id_")
                 continue;
@@ -37,39 +47,36 @@ public static class MongoIndexesExtensions
             });
         }
         
+        // Create new indexes
         foreach (var (indexProperty, indexAttribute) in indexProps)
         {
             if (currentIndexes.Any(x => x.Name == indexProperty.Name))
                 continue;
 
-            Console.WriteLine($"Creating index {typeof(TDocument).Name}.{indexProperty.Name}");
-            await repo.CreateIndex(indexProperty.Name, indexAttribute.IsUnique);
+            Console.WriteLine($"Creating index {documentType.Name}.{indexProperty.Name}");
+            await collection.CreateIndexAsync(indexProperty.Name, indexAttribute.IsUnique);
         }
 
+        // Delete old indexes
         foreach (var indexName in currentIndexes)
         {
             if (indexProps.Any(x => x.Info.Name == indexName.Name))
                 continue;
             
-            Console.WriteLine($"Delete index {typeof(TDocument).Name}.{indexName}");
-            repo.DeleteIndex(indexName.MongoName);
+            Console.WriteLine($"Deleting index {documentType.Name}.{indexName.MongoName}");
+            await collection.DeleteIndexAsync(indexName.MongoName);
         }
     }
     
-    public static Task CreateIndex<TDocument>(this IMongoRepo<TDocument> repo, string nameOfParameter, bool isUnique)
-        where TDocument : MongoDocument
+    public static Task CreateIndexAsync(this IMongoCollection<BsonDocument> collection, string fieldName, bool isUnique = false)
     {
-        var options = new CreateIndexOptions() { Unique = isUnique };
-        var field = new StringFieldDefinition<TDocument>(nameOfParameter);
-        var indexDefinition = new IndexKeysDefinitionBuilder<TDocument>().Ascending(field);
-        
-        return repo.GetCollection().Indexes.CreateOneAsync(indexDefinition, options);
+        var options = new CreateIndexOptions { Unique = isUnique };
+        var indexDefinition = Builders<BsonDocument>.IndexKeys.Ascending(fieldName);
+        return collection.Indexes.CreateOneAsync(new CreateIndexModel<BsonDocument>(indexDefinition, options));
     }
     
-    
-    public static void DeleteIndex<TDocument>(this IMongoRepo<TDocument> repo, string nameOfParameter)
-        where TDocument : MongoDocument
+    public static Task DeleteIndexAsync(this IMongoCollection<BsonDocument> collection, string indexName)
     {
-        repo.GetCollection().Indexes.DropOne(nameOfParameter, CancellationToken.None);
+        return collection.Indexes.DropOneAsync(indexName);
     }
 }

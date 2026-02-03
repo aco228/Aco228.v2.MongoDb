@@ -56,54 +56,25 @@ public static class MongoRepoHelpers
         var registerRepositoryMethod = typeof(MongoRepoHelpers).GetMethod(nameof(RegisterRepository), BindingFlags.NonPublic | BindingFlags.Static);
         if (registerRepositoryMethod == null)
             throw new InvalidOperationException("Can't find RegisterRepository method");
+
+        var documentTypes = new List<Type>();
         
         foreach (var assemblyType in assemblyTypes)
         {
             if (!typeof(MongoDocument).IsAssignableFrom(assemblyType) || assemblyType.IsAbstract)
                 continue;
             
+            documentTypes.Add(assemblyType);
             var registerRepositoryGeneric = registerRepositoryMethod.MakeGenericMethod(assemblyType, typeof(TDbContext));
             registerRepositoryGeneric.Invoke(null, new object[] { services });
         }
 
-        // services.RegisterPostBuildActionAsync(async (pr) =>
-        // {
-        //     await ConfigureMongoIndexesFromAssembly<TDbContext>(assembly); 
-        // });
-    }
-
-    private static async Task ConfigureMongoIndexesFromAssembly<TDbContext>(Assembly assembly)
-        where TDbContext : IMongoDbContext
-    {
-        var assemblyTypes = assembly.GetTypes();
-        foreach (var assemblyType in assemblyTypes)
+        services.RegisterPostBuildActionAsync(async (pr) =>
         {
-            if (!typeof(MongoDocument).IsAssignableFrom(assemblyType) || assemblyType.IsAbstract)
-                continue;
-            
-            var repoType = typeof(IMongoRepo<>).MakeGenericType(assemblyType);
-            var repoService = ServiceProviderHelper.GetServiceByType(repoType);
-            if (repoService == null)
-                continue;
-            
-            // MongoIndexesExtensions.ConfigureIndexesAsync()
-            
-
-            int a = 0;
-
-            // var repo = CreateRepo<TDocument, TDbContext>();
-            // await repo.ConfigureIndexesAsync();
-
-            // var method = typeof(MongoRepoHelpers).GetMethod(nameof(CreateRepo), BindingFlags.Public | BindingFlags.Static);
-            // var genericMethod = method?.MakeGenericMethod(assemblyType);
-            // var service = genericMethod?.Invoke(null, null);
-            // if (service == null)
-            //     continue;
-            //
-            // var configureIndexesAsyncMethod = typeof(MongoIndexesExtensions).GetMethod( nameof(MongoIndexesExtensions.ConfigureIndexesAsync), BindingFlags.Public | BindingFlags.Static);
-            // var configureIndexesAsyncMethodGeneric = configureIndexesAsyncMethod?.MakeGenericMethod(assemblyType);
-            // configureIndexesAsyncMethodGeneric?.Invoke(null, new []{ service });
-        }
+            var dbContext = pr.GetService<TDbContext>()!;
+            foreach (var documentType in documentTypes)
+                await MongoIndexesExtensions.ConfigureIndexes(dbContext, documentType);
+        });
     }
     
 }
