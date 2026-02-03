@@ -9,11 +9,12 @@ public interface IMongoRepo<TDocument>
     where TDocument : MongoDocument
 {
     internal void Configure(BsonCollectionAttribute configuration, IMongoDbContext context);
+    internal void GuardConfiguration();
+    
     IMongoCollection<TDocument> GetCollection();
     IQueryable<TDocument> AsQueryable() => GetCollection().AsQueryable();
     IMongoRepoTransactionalManager<TDocument> GetTransactionalManager() => new MongoRepoTransactionalManager<TDocument>(this);
-    internal void GuardConfiguration();
-
+    
     public List<TDocument> LoadAll() => AsQueryable().ToList();
     public Task<List<TDocument>> LoadAllAsync() => AsQueryable().ToListAsync();
     public LoadSpecification<TDocument, TDocument> Load() => new(this);

@@ -15,11 +15,10 @@ public class MongoRepo<TDocument> : IMongoRepo<TDocument>
     {
         _database = context.GetDatabase();
         _collection = _database.GetCollection<TDocument>(configurationAttribute.CollectionName);
-        _isConfigured = true;
     }
 
     public IMongoCollection<TDocument> GetCollection() => _collection!;
-    
+
     public void GuardConfiguration()
     {
         if (!_isConfigured) throw new InvalidOperationException("The collection configuration is not configured");
