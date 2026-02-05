@@ -12,7 +12,7 @@ internal static class SpecificationLoadProjectionExtensions
         if (typeof(TProjection) == typeof(TDocument))
         {
             if(spec.TrackValues)
-                (input as TDocument).StartTracking();
+                (input as TDocument)?.StartTracking();
             
             return input as TProjection;
         }

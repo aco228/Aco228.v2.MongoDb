@@ -12,7 +12,7 @@ public class MongoTrackingObject
     private readonly MongoDocumentPropertyEntry[] _properties;
     private Dictionary<string, object?> _originalValues = new();
 
-    private static List<string> IgnoreProperties = new()
+    private static readonly HashSet<string> IgnoreProperties = new()
     {
         nameof(MongoDocument.Id),
         nameof(MongoDocument.CreatedUtc),
@@ -94,7 +94,7 @@ public class MongoTrackingObject
         var valueType = value.GetType();
 
         if (typeof(System.Collections.ICollection).IsAssignableFrom(valueType) && valueType != typeof(string))
-            return value;
+            return CloneCollection(value);
 
         if (valueType.IsValueType || valueType == typeof(string))
             return value;
@@ -103,6 +103,57 @@ public class MongoTrackingObject
             return value;
 
         return value;
+    }
+
+    private static object CloneCollection(object collection)
+    {
+        var collectionType = collection.GetType();
+        var genericDef = collectionType.GetGenericTypeDefinition();
+
+        if (typeof(System.Collections.Generic.IList<>).IsAssignableFrom(genericDef))
+        {
+            var itemType = collectionType.GetGenericArguments()[0];
+            var listType = typeof(List<>).MakeGenericType(itemType);
+            var newList = (System.Collections.IList)Activator.CreateInstance(listType)!;
+
+            foreach (var item in (System.Collections.IEnumerable)collection)
+                newList.Add(item);
+
+            return newList;
+        }
+
+        if (typeof(System.Collections.Generic.ISet<>).IsAssignableFrom(genericDef))
+        {
+            var itemType = collectionType.GetGenericArguments()[0];
+            var setType = typeof(HashSet<>).MakeGenericType(itemType);
+            var newSet = (System.Collections.IEnumerable)Activator.CreateInstance(setType)!;
+            var addMethod = setType.GetMethod("Add");
+
+            foreach (var item in (System.Collections.IEnumerable)collection)
+                addMethod!.Invoke(newSet, new[] { item });
+
+            return newSet;
+        }
+
+        if (typeof(System.Collections.Generic.IDictionary<,>).IsAssignableFrom(genericDef))
+        {
+            var args = collectionType.GetGenericArguments();
+            var dictType = typeof(Dictionary<,>).MakeGenericType(args);
+            var newDict = (System.Collections.IEnumerable)Activator.CreateInstance(dictType)!;
+            var addMethod = dictType.GetMethod("Add");
+
+            foreach (System.Collections.DictionaryEntry item in (System.Collections.IEnumerable)collection)
+                addMethod!.Invoke(newDict, new[] { item.Key, item.Value });
+
+            return newDict;
+        }
+
+        if (collectionType.IsArray)
+        {
+            return ((Array)collection).Clone();
+        }
+
+        return collection;
     }
 
     private static bool AreValuesEqual(object? oldValue, object? newValue)
@@ -116,7 +167,24 @@ public class MongoTrackingObject
         var valueType = oldValue.GetType();
 
         if (typeof(System.Collections.ICollection).IsAssignableFrom(valueType) && valueType != typeof(string))
-            return ReferenceEquals(oldValue, newValue);
+        {
+            var oldList = (System.Collections.ICollection)oldValue;
+            var newList = (System.Collections.ICollection)newValue;
+        
+            if (oldList.Count != newList.Count)
+                return false;
+
+            var oldEnum = oldList.GetEnumerator();
+            var newEnum = newList.GetEnumerator();
+
+            while (oldEnum.MoveNext() && newEnum.MoveNext())
+            {
+                if (!AreValuesEqual(oldEnum.Current, newEnum.Current))
+                    return false;
+            }
+
+            return true;
+        }
 
         if (valueType.IsValueType)
             return oldValue.Equals(newValue);

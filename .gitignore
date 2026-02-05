@@ -317,3 +317,4 @@ src/Arbitrage.DesktopConsoleTests/DesktopConsoleProgram.cs
 src/Aco228.WebLLM/Aco228.TextGen.Consoler/.env
 src/Aco228.v2.MongoDb/Aco228.MongoDb/report.md
 src/Aco228.v2.MongoDb/Aco228.MongoDb.Consoler/.env
+src/Aco228.v2.MongoDb/report.md

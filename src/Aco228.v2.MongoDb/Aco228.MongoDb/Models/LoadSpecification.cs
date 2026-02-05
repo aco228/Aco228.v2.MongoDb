@@ -135,42 +135,41 @@ public class LoadSpecification<TDocument, TProjection>
         return Builders<TDocument>.Filter.And(filters);
     }
     
-    internal virtual IFindFluent<TDocument, TDocument> GetCursor(Expression<Func<TDocument, bool>>? filter = null)
+    internal virtual IFindFluent<TDocument, TProjection> GetCursor(Expression<Func<TDocument, bool>>? filter = null)
     {
         FilterBy(filter);
         PrepareProjection();
-        
+    
         var filters = BuildFilter();
         var cursor = Repo.GetCollection().Find(filters);
-
-        if (typeof(TDocument) != typeof(TProjection))
-            cursor.Project<TDocument>(_projectionDefinition);
-        
+    
         if (_sort != null) cursor = cursor.Sort(_sort);
         if (_limit.HasValue) cursor = cursor.Limit(_limit.Value);
         if (_skip.HasValue) cursor = cursor.Skip(_skip.Value);
 
-        return cursor;
+        return typeof(TDocument) == typeof(TProjection) 
+            ? (IFindFluent<TDocument, TProjection>)(object)cursor
+            : cursor.Project<TProjection>(_projectionDefinition);
     }
-    
-    internal virtual async Task<IAsyncCursor<TDocument>> GetCursorAsync(
+
+    internal virtual async Task<IAsyncCursor<TProjection>> GetCursorAsync(
         Expression<Func<TDocument, bool>>? filter = null,
         int? batchSize = null)
     {
         FilterBy(filter);
         PrepareProjection();
-        
+    
         var filters = BuildFilter();
-        var findOptions = new FindOptions<TDocument, TDocument>();
+        var findOptions = new FindOptions<TDocument, TProjection>();
 
         if (typeof(TDocument) != typeof(TProjection))
             findOptions.Projection = _projectionDefinition;
-        
+    
         if (_sort != null) findOptions.Sort = _sort;
-        if (_limit.HasValue) findOptions.Limit =  _limit.Value;
+        if (_limit.HasValue) findOptions.Limit = _limit.Value;
         if (_skip.HasValue) findOptions.Skip = _skip.Value;
-        
-        var cursor = await Repo.GetCollection().FindAsync(filters,  findOptions);
+    
+        var cursor = await Repo.GetCollection().FindAsync(filters, findOptions);
         return cursor;
     }
 }

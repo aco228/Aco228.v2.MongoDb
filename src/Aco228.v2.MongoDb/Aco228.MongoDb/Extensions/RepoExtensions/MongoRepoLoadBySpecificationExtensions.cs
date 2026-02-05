@@ -26,7 +26,7 @@ public static class MongoLoadBySpecificationExtensions
         where TProjection : class
         => spec.SetRepo(repo).GetCursor().FirstOrDefault().ProjectSingle(spec);
 
-    public static async Task<TProjection>? FirstOrDefaultAsync<TDocument, TProjection>(this IMongoRepo<TDocument> repo,
+    public static async Task<TProjection?> FirstOrDefaultAsync<TDocument, TProjection>(this IMongoRepo<TDocument> repo,
         LoadSpecification<TDocument, TProjection> spec)
         where TDocument : MongoDocument
         where TProjection : class

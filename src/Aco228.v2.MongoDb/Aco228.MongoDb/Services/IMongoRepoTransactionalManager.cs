@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Extensions.RepoExtensions;
+﻿using Aco228.Common.Models;
+using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 
 namespace Aco228.MongoDb.Services;
@@ -27,8 +28,8 @@ public interface IMongoRepoTransactionalManager<T>
 public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T>
     where T : MongoDocument
 {
-    private List<T> _insertRequests = new();
-    private List<T> _deleteRequests = new();
+    private ConcurrentList<T> _insertRequests = new();
+    private ConcurrentList<T> _deleteRequests = new();
     private readonly IMongoRepo<T> _repo;
     private int CurrentCount => _insertRequests.Count + _deleteRequests.Count;
     private int _limit = 15;
