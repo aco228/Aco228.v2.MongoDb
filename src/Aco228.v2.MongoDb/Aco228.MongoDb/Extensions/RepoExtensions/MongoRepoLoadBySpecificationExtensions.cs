@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Extensions.RepoExtensions;
+﻿using System.Linq.Expressions;
+using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
 using MongoDB.Driver;
@@ -102,34 +103,38 @@ public static class MongoRepoLoadBySpecificationExtensions
         return (await cursor.ToListAsync()).ProjectList(spec);
     }
 
-    // public static async IAsyncEnumerable<TProjection> LoadInBatchesAsync<TDocument, TProjection>(
-    //     this LoadSpecification<TDocument, TProjection> spec, int batchSize = 50)
-    //     where TDocument : MongoDocument
-    //     where TProjection : class
-    // {
-    //     if (spec.Repo == null) throw new InvalidOperationException("Repo not present in specification");
-    //
-    //     using var cursor = await spec.GetCursorAsync(batchSize: batchSize);
-    //     int max = 15000;
-    //     List<TDocument>? current = null;
-    //
-    //     for (int i = 0; i < max; i++)
-    //     {
-    //         var task = cursor.MoveNextAsync();
-    //         if (current != null && current.Any())
-    //         {
-    //             foreach (var elem in current)
-    //                 yield return elem;
-    //
-    //             current = null;
-    //         }
-    //
-    //         await task;
-    //
-    //         if (task.Result == false)
-    //             break;
-    //
-    //         current = cursor.Current.ToList();
-    //     }
-    // }
+    public static async IAsyncEnumerable<TProjection> LoadInBatchesAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        int batchSize = 50,
+        CancellationToken? cancellationToken = null)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        if (spec.Repo == null) 
+            throw new InvalidOperationException("Repo not present in specification");
+
+        using var cursor = await spec.GetCursorAsync(batchSize: batchSize);
+        var ct = cancellationToken ?? CancellationToken.None;
+    
+        // Load first batch
+        Task<bool> moveTask = cursor.MoveNextAsync(ct);
+    
+        while (true)
+        {
+            // Wait for current batch to load
+            if (!await moveTask)
+                break;
+            
+            var currentBatch = cursor.Current.ToList();
+        
+            // Start loading next batch while we process current one
+            moveTask = cursor.MoveNextAsync(ct);
+        
+            // Yield current batch with projection
+            foreach (var document in currentBatch)
+            {
+                yield return document.ProjectSingle(spec);
+            }
+        }
+    }
 }

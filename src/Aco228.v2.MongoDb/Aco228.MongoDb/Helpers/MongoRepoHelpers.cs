@@ -44,10 +44,10 @@ public static class MongoRepoHelpers
         });
     }
 
-    public static void RegisterRepositoriesFromAssembly<TDbContext>(this IServiceCollection services)
+    public static void RegisterRepositoriesFromAssembly<TDbContext>(this IServiceCollection services, Assembly? callerAssembly = null)
         where TDbContext : IMongoDbContext
     {
-        var assembly = Assembly.GetAssembly(typeof(TDbContext));
+        var assembly = callerAssembly ?? Assembly.GetAssembly(typeof(TDbContext));
         var assemblyTypes = assembly.GetTypes();
         
         if(!typeof(TDbContext).IsInterface)

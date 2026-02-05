@@ -1,5 +1,7 @@
-﻿using Aco228.MongoDb.Models;
+﻿using System.Linq.Expressions;
+using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Models.Attributes;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -19,5 +21,6 @@ public interface IMongoRepo<TDocument>
     public Task<List<TDocument>> LoadAllAsync() => AsQueryable().ToListAsync();
     public LoadSpecification<TDocument, TDocument> Load() => new(this);
     public LoadSpecification<TDocument, TProjection> Project<TProjection>() where TProjection :  class => new(this);
-    
+    public Task<TDocument?> FirstOrDefault(Expression<Func<TDocument, bool>>? filter) => AsQueryable().FirstOrDefaultAsync(filter);
+
 }
