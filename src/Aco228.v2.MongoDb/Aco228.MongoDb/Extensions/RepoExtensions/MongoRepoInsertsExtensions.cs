@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Models;
+﻿using Aco228.MongoDb.Extensions.MongoDocuments;
+using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
 using MongoDB.Driver;
 
@@ -12,6 +13,10 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         document.CheckIfNewAndPrepareForInsert();
         
+        if(!document.HasTrackingAndAnyChanges())
+            return;
+        
+        document.GetTrackingObject()?.ResetTracking();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
         repo.GetCollection()!.ReplaceOne(filter, document, new ReplaceOptions { IsUpsert = true });
     }
@@ -22,6 +27,10 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         document.CheckIfNewAndPrepareForInsert();
         
+        if(!document.HasTrackingAndAnyChanges())
+            return Task.FromResult(true);
+        
+        document.GetTrackingObject()?.ResetTracking();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
         return repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
     }
@@ -48,7 +57,7 @@ public static class MongoRepoInsertsExtensions
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue));
         
         await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
-        trackObject.ClearTracking().StartTracking();
+        trackObject.ResetTracking();
     }
 
     public static void InsertOrUpdateMany<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
@@ -66,8 +75,12 @@ public static class MongoRepoInsertsExtensions
                 operations.Add(new InsertOneModel<TDocument>(document));
             else
             {
+                if (!document.HasTrackingAndAnyChanges())
+                    continue;
+                
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
                 operations.Add(new ReplaceOneModel<TDocument>(filter, document));
+                document.GetTrackingObject()?.ResetTracking();
             }
         }
 
@@ -92,8 +105,12 @@ public static class MongoRepoInsertsExtensions
                 operations.Add(new InsertOneModel<TDocument>(document));
             else
             {
+                if (!document.HasTrackingAndAnyChanges())
+                    continue;
+                
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
                 operations.Add(new ReplaceOneModel<TDocument>(filter, document));
+                document.GetTrackingObject()?.ResetTracking();
             }
         }
 

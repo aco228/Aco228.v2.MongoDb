@@ -12,7 +12,7 @@ public class MongoDocumentPropertyEntry
     public string ColumnName => ProjectMapAttribute?.PropertyName ?? PropertyInfo.Name;
 }
 
-public static class MongoDocumentMap
+public static class MongoDocumentPropertyMap
 {
     private static readonly ConcurrentDictionary<Type, List<MongoDocumentPropertyEntry>> _documentProperties = new();
 

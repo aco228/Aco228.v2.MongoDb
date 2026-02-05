@@ -5,6 +5,7 @@ using Aco228.Common.Extensions;
 using Aco228.MongoDb.Consoler.Database;
 using Aco228.MongoDb.Consoler.Database.Documents;
 using Aco228.MongoDb.Extensions;
+using Aco228.MongoDb.Extensions.MongoDocuments;
 using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Helpers;
 using Aco228.MongoDb.Services;
@@ -18,14 +19,23 @@ builder.RegisterServicesFromAssembly(typeof(Program).Assembly);
 builder.RegisterRepositoriesFromAssembly<ILocalDbContext>();
 var serviceProvider = await builder.BuildCollection();
 
-
 var userRepo = serviceProvider.GetService<IMongoRepo<UserDocument>>()!;
-var user = await userRepo.Load().FirstOrDefaultAsync(x => x.Username == "aco");
-if (user == null) throw new Exception("User not found");
-user.StartTracking();
+var allUsers = userRepo.Track().ToList();
 
-user.SomeData = "RokiBejbe + Some new data " + Guid.NewGuid();
-user.SomeExtraData = "Extra + Some new data " + Guid.NewGuid();
+int index = 0;
+foreach (var userDocument in allUsers)
+{
+    index++;
+    if (index % 2 == 0)
+    {
+        Console.WriteLine($"Updating {userDocument.Id}");
+        userDocument.SomeData = "RokiBejbe + " + Guid.NewGuid();
+    }
+    else
+    {
+        Console.WriteLine($"Ignoring {userDocument.Id}");
+    }
+}
 
-await userRepo.InsertOrUpdateFieldsAsync(user);
+await allUsers.InsertOrUpdateManyAsync();
 Console.WriteLine("Hello, World!");

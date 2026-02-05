@@ -19,8 +19,9 @@ public interface IMongoRepo<TDocument>
     
     public List<TDocument> LoadAll() => AsQueryable().ToList();
     public Task<List<TDocument>> LoadAllAsync() => AsQueryable().ToListAsync();
-    public LoadSpecification<TDocument, TDocument> Load() => new(this);
-    public LoadSpecification<TDocument, TProjection> Project<TProjection>() where TProjection :  class => new(this);
+    public LoadSpecification<TDocument, TDocument> Load() => new(this, false);
+    public LoadSpecification<TDocument, TDocument> Track() => new(this, true);
+    public LoadSpecification<TDocument, TProjection> Project<TProjection>() where TProjection :  class => new(this, true);
     public Task<TDocument?> FirstOrDefault(Expression<Func<TDocument, bool>>? filter) => AsQueryable().FirstOrDefaultAsync(filter);
 
 }

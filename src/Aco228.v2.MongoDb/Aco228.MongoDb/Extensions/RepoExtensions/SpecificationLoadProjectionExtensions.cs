@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Models;
+﻿using Aco228.MongoDb.Extensions.MongoDocuments;
+using Aco228.MongoDb.Models;
 
 namespace Aco228.MongoDb.Extensions.RepoExtensions;
 
@@ -8,8 +9,13 @@ internal static class SpecificationLoadProjectionExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        if(typeof(TProjection) == typeof(TDocument))
+        if (typeof(TProjection) == typeof(TDocument))
+        {
+            if(spec.TrackValues)
+                (input as TDocument).StartTracking();
+            
             return input as TProjection;
+        }
 
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");
@@ -25,8 +31,12 @@ internal static class SpecificationLoadProjectionExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        if(typeof(TProjection) == typeof(TDocument))
+        if (typeof(TProjection) == typeof(TDocument))
+        {
+            if (spec.TrackValues)
+                input = (input as IEnumerable<TDocument>).StartTracking();
             return input as IEnumerable<TProjection>;
+        }
 
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");
@@ -43,7 +53,11 @@ internal static class SpecificationLoadProjectionExtensions
         where TProjection : class
     {
         if(typeof(TProjection) == typeof(TDocument))
+        {
+            if (spec.TrackValues)
+                (input as IEnumerable<TDocument>).StartTracking();
             return input as List<TProjection>;
+        }
 
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");

@@ -11,17 +11,20 @@ public class LoadSpecification<TDocument, TProjection>
     where TProjection : class
 {
     internal IMongoRepo<TDocument> Repo { get; set; }
-    protected List<Expression<Func<TDocument, bool>>> _expressions = new();
-    protected SortDefinition<TDocument>? _sort;
-    private ProjectionDefinition<TDocument>? _projectionDefinition;
     internal ProjectionMapper<TProjection, TDocument>? ProjectMapper { get; set; }
-    protected int? _limit;
-    protected int? _skip;
-    
+    internal bool TrackValues { get; set; }
+
+    private int? _limit;
+    private int? _skip;
+    private List<Expression<Func<TDocument, bool>>> _expressions = new();
+    private SortDefinition<TDocument>? _sort;
+    private ProjectionDefinition<TDocument>? _projectionDefinition;
+
     public LoadSpecification() { }
 
-    public LoadSpecification(IMongoRepo<TDocument> repo)
+    public LoadSpecification(IMongoRepo<TDocument> repo, bool trackValues)
     {
+        TrackValues = trackValues;
         Repo = repo;
     }
 

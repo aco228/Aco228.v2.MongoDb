@@ -12,11 +12,18 @@ public class MongoTrackingObject
     private readonly MongoDocumentPropertyEntry[] _properties;
     private Dictionary<string, object?> _originalValues = new();
 
+    private static List<string> IgnoreProperties = new()
+    {
+        nameof(MongoDocument.Id),
+        nameof(MongoDocument.CreatedUtc),
+        nameof(MongoDocument.UpdatedUtc),
+    };
+
     public MongoTrackingObject(object document, Type documentType)
     {
         _document = document ?? throw new ArgumentNullException(nameof(document));
         _documentType = documentType;
-        _properties = MongoDocumentMap.MapThrough(_documentType).ToArray();
+        _properties = MongoDocumentPropertyMap.MapThrough(_documentType).ToArray();
     }
 
     public MongoTrackingObject StartTracking()
@@ -29,29 +36,32 @@ public class MongoTrackingObject
 
         return this;
     }
-
+    
     public List<ChangedField> GetChangedFields()
+        => EnumerateChangedFields().ToList();
+    
+    public bool AnyChanges()
+        => EnumerateChangedFields().Any();
+
+    private IEnumerable<ChangedField> EnumerateChangedFields()
     {
         if (_originalValues.Count == 0)
             throw new InvalidOperationException("Document is not tracked. Call StartTracking() first.");
 
-        var changes = new List<ChangedField>(_properties.Length);
-
         foreach (var entry in _properties)
         {
             var prop = entry.PropertyInfo;
+            if (IgnoreProperties.Contains(prop.Name))
+                continue;
+            
             var currentValue = prop.GetValue(_document);
 
             if (!_originalValues.TryGetValue(prop.Name, out var originalValue))
                 continue;
 
             if (!AreValuesEqual(originalValue, currentValue))
-            {
-                changes.Add(new ChangedField(prop.Name, originalValue, currentValue));
-            }
+                yield return new ChangedField(prop.Name, originalValue, currentValue);
         }
-
-        return changes;
     }
 
     public object? GetOriginalValue(string propertyName)
@@ -60,6 +70,12 @@ public class MongoTrackingObject
     }
 
     public bool HasTracking() => _originalValues.Count > 0;
+
+    public void ResetTracking()
+    {
+        ClearTracking();
+        StartTracking();
+    }
 
     public MongoTrackingObject ClearTracking()
     {

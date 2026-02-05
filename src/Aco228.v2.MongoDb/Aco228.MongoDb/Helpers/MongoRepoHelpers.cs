@@ -20,7 +20,7 @@ public static class MongoRepoHelpers
             return null;
         
         var configurationAttribute = documentType.GetCustomAttribute<BsonCollectionAttribute>();
-        if(configurationAttribute == null)
+        if (configurationAttribute == null)
             throw new ArgumentException($"{documentType.Name} doesn't have BsonCollectionAttribute");
 
         var mongoDbContextType = typeof(TDbContext);
@@ -37,7 +37,7 @@ public static class MongoRepoHelpers
         where TDbContext : IMongoDbContext
         where TDocument : MongoDocument
     {
-        services.AddTransient<IMongoRepo<TDocument>>(provider =>
+        services.AddSingleton<IMongoRepo<TDocument>>(provider =>
         {
             var repo = CreateRepo<TDocument, TDbContext>();
             return repo;
