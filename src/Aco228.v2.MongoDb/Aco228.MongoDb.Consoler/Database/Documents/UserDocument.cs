@@ -17,6 +17,17 @@ public class UserDocument : MongoDocument
     
     [MongoIndex]
     public string SetBck { get; set; }
+
+    public List<string> Data { get; set; } = new();
+    public HashSet<string> Hash { get; set; } = new();
+    public Dictionary<string, int> Dicts { get; set; } = new();
+    public UserDocExtra? Extra { get; set; }
+}
+
+[BsonIgnoreExtraElements]
+public class UserDocExtra
+{
+    public string Name { get; set; }
 }
 
 public class UserProjection : MongoProjection<UserDocument>

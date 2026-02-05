@@ -1,4 +1,6 @@
-﻿using Aco228.MongoDb.Helpers;
+﻿using System.Collections.Concurrent;
+using System.Text.Json;
+using Aco228.MongoDb.Helpers;
 using MongoDB.Bson;
 
 namespace Aco228.MongoDb.Models;
@@ -19,6 +21,9 @@ public class MongoTrackingObject
         nameof(MongoDocument.UpdatedUtc),
     };
 
+    private static readonly ConcurrentDictionary<Type, Func<object, object>> _cloners = new();
+    private static readonly ConcurrentDictionary<Type, Func<object, object, bool>> _comparers = new();
+
     public MongoTrackingObject(object document, Type documentType)
     {
         _document = document ?? throw new ArgumentNullException(nameof(document));
@@ -34,7 +39,7 @@ public class MongoTrackingObject
                 continue;
             
             var value = entry.PropertyInfo.GetValue(_document);
-            _originalValues[entry.PropertyInfo.Name] = StoreValue(value, entry.PropertyInfo.PropertyType);
+            _originalValues[entry.PropertyInfo.Name] = StoreValue(value);
         }
 
         return this;
@@ -86,7 +91,7 @@ public class MongoTrackingObject
         return this;
     }
 
-    private static object? StoreValue(object? value, Type propertyType)
+    private static object? StoreValue(object? value)
     {
         if (value == null)
             return null;
@@ -94,66 +99,15 @@ public class MongoTrackingObject
         var valueType = value.GetType();
 
         if (typeof(System.Collections.ICollection).IsAssignableFrom(valueType) && valueType != typeof(string))
-            return CloneCollection(value);
+        {
+            var cloner = _cloners.GetOrAdd(valueType, BuildCloner);
+            return cloner(value);
+        }
 
-        if (valueType.IsValueType || valueType == typeof(string))
+        if (valueType.IsValueType || valueType == typeof(string) || valueType == typeof(Guid) || valueType == typeof(ObjectId))
             return value;
 
-        if (valueType == typeof(Guid) || valueType == typeof(ObjectId))
-            return value;
-
-        return value;
-    }
-
-    private static object CloneCollection(object collection)
-    {
-        var collectionType = collection.GetType();
-        var genericDef = collectionType.GetGenericTypeDefinition();
-
-        if (typeof(System.Collections.Generic.IList<>).IsAssignableFrom(genericDef))
-        {
-            var itemType = collectionType.GetGenericArguments()[0];
-            var listType = typeof(List<>).MakeGenericType(itemType);
-            var newList = (System.Collections.IList)Activator.CreateInstance(listType)!;
-
-            foreach (var item in (System.Collections.IEnumerable)collection)
-                newList.Add(item);
-
-            return newList;
-        }
-
-        if (typeof(System.Collections.Generic.ISet<>).IsAssignableFrom(genericDef))
-        {
-            var itemType = collectionType.GetGenericArguments()[0];
-            var setType = typeof(HashSet<>).MakeGenericType(itemType);
-            var newSet = (System.Collections.IEnumerable)Activator.CreateInstance(setType)!;
-            var addMethod = setType.GetMethod("Add");
-
-            foreach (var item in (System.Collections.IEnumerable)collection)
-                addMethod!.Invoke(newSet, new[] { item });
-
-            return newSet;
-        }
-
-        if (typeof(System.Collections.Generic.IDictionary<,>).IsAssignableFrom(genericDef))
-        {
-            var args = collectionType.GetGenericArguments();
-            var dictType = typeof(Dictionary<,>).MakeGenericType(args);
-            var newDict = (System.Collections.IEnumerable)Activator.CreateInstance(dictType)!;
-            var addMethod = dictType.GetMethod("Add");
-
-            foreach (System.Collections.DictionaryEntry item in (System.Collections.IEnumerable)collection)
-                addMethod!.Invoke(newDict, new[] { item.Key, item.Value });
-
-            return newDict;
-        }
-
-        if (collectionType.IsArray)
-        {
-            return ((Array)collection).Clone();
-        }
-
-        return collection;
+        return JsonSerializer.Serialize(value);
     }
 
     private static bool AreValuesEqual(object? oldValue, object? newValue)
@@ -164,34 +118,96 @@ public class MongoTrackingObject
         if (oldValue == null || newValue == null)
             return false;
 
+        if (oldValue is string && newValue is not string)
+        {
+            var newJson = JsonSerializer.Serialize(newValue);
+            return (string)oldValue == newJson;
+        }
+
         var valueType = oldValue.GetType();
 
         if (typeof(System.Collections.ICollection).IsAssignableFrom(valueType) && valueType != typeof(string))
         {
-            var oldList = (System.Collections.ICollection)oldValue;
-            var newList = (System.Collections.ICollection)newValue;
-        
-            if (oldList.Count != newList.Count)
-                return false;
-
-            var oldEnum = oldList.GetEnumerator();
-            var newEnum = newList.GetEnumerator();
-
-            while (oldEnum.MoveNext() && newEnum.MoveNext())
-            {
-                if (!AreValuesEqual(oldEnum.Current, newEnum.Current))
-                    return false;
-            }
-
-            return true;
+            var comparer = _comparers.GetOrAdd(valueType, BuildComparer);
+            return comparer(oldValue, newValue);
         }
 
-        if (valueType.IsValueType)
-            return oldValue.Equals(newValue);
-
-        if (oldValue is string)
+        if (valueType.IsValueType || valueType == typeof(string))
             return oldValue.Equals(newValue);
 
         return ReferenceEquals(oldValue, newValue);
+    }
+
+    private static Func<object, object> BuildCloner(Type collectionType)
+    {
+        if (collectionType.IsArray)
+            return col => ((Array)col).Clone();
+
+        if (!collectionType.IsGenericType)
+            return col => col;
+
+        var genericDef = collectionType.GetGenericTypeDefinition();
+        var args = collectionType.GetGenericArguments();
+
+        if (genericDef == typeof(List<>))
+            return col => CloneList(col, args[0]);
+
+        if (genericDef == typeof(Dictionary<,>))
+            return col => CloneDictionary(col, args);
+
+        if (genericDef == typeof(HashSet<>))
+            return col => CloneHashSet(col, args[0]);
+
+        return col => col;
+    }
+
+    private static Func<object, object, bool> BuildComparer(Type collectionType)
+    {
+        return (old, new_) => CompareCollections(old, new_);
+    }
+
+    private static object CloneList(object collection, Type itemType)
+    {
+        var listType = typeof(List<>).MakeGenericType(itemType);
+        var newList = (System.Collections.IList)Activator.CreateInstance(listType)!;
+        foreach (var item in (System.Collections.IEnumerable)collection)
+            newList.Add(item);
+        return newList;
+    }
+
+    private static object CloneDictionary(object collection, Type[] args)
+    {
+        var dictType = typeof(Dictionary<,>).MakeGenericType(args);
+        var newDict = (System.Collections.IDictionary)Activator.CreateInstance(dictType)!;
+        foreach (System.Collections.DictionaryEntry entry in (System.Collections.IDictionary)collection)
+            newDict.Add(entry.Key, entry.Value);
+        return newDict;
+    }
+
+    private static object CloneHashSet(object collection, Type itemType)
+    {
+        var setType = typeof(HashSet<>).MakeGenericType(itemType);
+        var newSet = (System.Collections.IEnumerable)Activator.CreateInstance(setType)!;
+        var addMethod = setType.GetMethod("Add")!;
+        foreach (var item in (System.Collections.IEnumerable)collection)
+            addMethod.Invoke(newSet, new[] { item });
+        return newSet;
+    }
+
+    private static bool CompareCollections(object? oldValue, object? newValue)
+    {
+        var oldList = (System.Collections.ICollection)oldValue!;
+        var newList = (System.Collections.ICollection)newValue!;
+
+        if (oldList.Count != newList.Count)
+            return false;
+
+        var oldArray = new object[oldList.Count];
+        var newArray = new object[newList.Count];
+        
+        oldList.CopyTo(oldArray, 0);
+        newList.CopyTo(newArray, 0);
+
+        return oldArray.SequenceEqual(newArray);
     }
 }

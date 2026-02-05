@@ -56,6 +56,9 @@ public static class MongoRepoInsertsExtensions
         if (!changedFields.Any())
             return;
 
+        foreach (var field in changedFields)
+            Console.WriteLine($"Changing {field.PropertyName} from {field.OldValue} to {field.NewValue}");
+
         var updater = Builders<TDocument>.Update;
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue));
         

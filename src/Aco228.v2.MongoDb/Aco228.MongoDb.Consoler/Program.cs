@@ -20,19 +20,11 @@ builder.RegisterRepositoriesFromAssembly<ILocalDbContext>();
 var serviceProvider = await builder.BuildCollection();
 
 var userRepo = serviceProvider.GetService<IMongoRepo<UserDocument>>()!;
-var users = userRepo.TrackProject<UserProjection>().ToList();
-
-int index = 0;
-var rnd = new Random();
-foreach (var userProjection in users)
-{
-    index++;
-    if (index % 2 == 0) continue;
-    userProjection.DasIstIndex = rnd.Next(1, 100);
-}
+var user = userRepo.Track().FirstOrDefault(x => x.Username == "aco")!; // - here is tracking called
 
 
-await users.UpdateAsync();
+user.Hash.Add("tri");
+user.Extra.Name = "Aleksandar";
 
-// await allUsers.UpdateFieldsAsync();
+await user.UpdateFieldsAsync();
 Console.WriteLine("Hello, World!");
