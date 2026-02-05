@@ -13,12 +13,13 @@ public class UserDocument : MongoDocument
     
     public int SomeIndex { get; set; }
     public string SomeData { get; set; }
+    public string SomeExtraData { get; set; }
     
     [MongoIndex]
     public string SetBck { get; set; }
 }
 
-public class UserProjection
+public class UserProjection : MongoProjection<UserDocument>
 {
     [ProjectMap(nameof(UserDocument.SomeIndex))]
     public int DasIstIndex { get; set; }

@@ -6,7 +6,7 @@ namespace Aco228.MongoDb.Models;
 
 [Serializable]
 [BsonIgnoreExtraElements]
-public abstract class MongoDocument
+public abstract class MongoDocument : MongoDocumentInternal
 {
     [BsonId]
     [BsonRepresentation(BsonType.String)]

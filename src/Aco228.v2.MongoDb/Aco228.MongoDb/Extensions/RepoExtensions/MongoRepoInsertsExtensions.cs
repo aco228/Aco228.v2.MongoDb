@@ -16,7 +16,6 @@ public static class MongoRepoInsertsExtensions
         repo.GetCollection()!.ReplaceOne(filter, document, new ReplaceOptions { IsUpsert = true });
     }
     
-
     public static Task InsertOrUpdateAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
         where TDocument : MongoDocument
     {
@@ -25,6 +24,31 @@ public static class MongoRepoInsertsExtensions
         
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
         return repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
+    }
+
+    public static async Task InsertOrUpdateFieldsAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
+        where TDocument : MongoDocument
+    {
+        repo.GuardConfiguration();
+        if (document.CheckIfNewAndPrepareForInsert())
+        {
+            await repo.InsertOrUpdateAsync( document);
+            return;
+        }
+        
+        var trackObject = document.GetTrackingObject();
+        if (trackObject == null)
+            throw new InvalidOperationException("Document is not tracked");
+        
+        var changedFields = trackObject.GetChangedFields();
+        if (!changedFields.Any())
+            return;
+
+        var updater = Builders<TDocument>.Update;
+        var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue));
+        
+        await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
+        trackObject.ClearTracking().StartTracking();
     }
 
     public static void InsertOrUpdateMany<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)

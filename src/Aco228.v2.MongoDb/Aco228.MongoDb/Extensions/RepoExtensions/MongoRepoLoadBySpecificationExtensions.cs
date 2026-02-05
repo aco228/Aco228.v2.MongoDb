@@ -74,19 +74,26 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TProjection : class
         => spec.GetCursor().FirstOrDefault().ProjectSingle(spec);
 
-    public static async Task<TProjection>? FirstOrDefaultAsync<TDocument, TProjection>(
-        this LoadSpecification<TDocument, TProjection> spec)
+    public static async Task<TProjection?> FirstOrDefaultAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
     {
+        if (filter != null) spec.FilterBy(filter);
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
     }
 
-    public static List<TProjection> ToList<TDocument, TProjection>(this LoadSpecification<TDocument, TProjection> spec)
+    public static List<TProjection> ToList<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.GetCursor().ToList().ProjectList(spec);
+    {
+        if (filter != null) spec.FilterBy(filter);
+        return spec.GetCursor().ToList().ProjectList(spec);
+    }
 
     public static IEnumerable<TProjection> ToEnumerable<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec)
@@ -95,10 +102,12 @@ public static class MongoRepoLoadBySpecificationExtensions
         => spec.GetCursor().ToEnumerable().ProjectEnumerable(spec);
 
     public static async Task<List<TProjection>> ToListAsync<TDocument, TProjection>(
-        this LoadSpecification<TDocument, TProjection> spec)
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
     {
+        if (filter != null) spec.FilterBy(filter);
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.ToListAsync()).ProjectList(spec);
     }
