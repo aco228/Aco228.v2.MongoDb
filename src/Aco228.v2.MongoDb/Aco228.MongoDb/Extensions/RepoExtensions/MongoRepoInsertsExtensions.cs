@@ -35,7 +35,7 @@ public static class MongoRepoInsertsExtensions
         return repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
     }
 
-    public static async Task InsertOrUpdateFieldsAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
+    public static async Task UpdateFieldsAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
         where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
@@ -47,7 +47,10 @@ public static class MongoRepoInsertsExtensions
         
         var trackObject = document.GetTrackingObject();
         if (trackObject == null)
-            throw new InvalidOperationException("Document is not tracked");
+        {
+            await repo.InsertOrUpdateAsync( document);
+            return;
+        }
         
         var changedFields = trackObject.GetChangedFields();
         if (!changedFields.Any())
@@ -58,6 +61,40 @@ public static class MongoRepoInsertsExtensions
         
         await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
         trackObject.ResetTracking();
+    }
+    
+
+    public static async Task UpdateFieldsManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
+        where TDocument : MongoDocument
+    {
+        repo.GuardConfiguration();
+        var updater = Builders<TDocument>.Update;
+        var inserts = new List<TDocument>();
+        var operations = new List<WriteModel<TDocument>>();
+        foreach (var document in documents)
+        {
+            var trackObject = document.GetTrackingObject();
+            if (document.CheckIfNewAndPrepareForInsert() || trackObject == null)
+            {
+                inserts.Add(document);
+                continue;
+            }    
+            
+            var changedFields = trackObject.GetChangedFields();
+            if (!changedFields.Any())
+                continue;
+
+            var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue));
+            var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
+            operations.Add(new UpdateOneModel<TDocument>(filter, updater.Combine(updateList)));
+            trackObject.ResetTracking();
+        }
+        
+        if(inserts.Any())
+            await repo.InsertOrUpdateManyAsync(inserts);
+        
+        if(operations.Any())
+            await repo.GetCollection().BulkWriteAsync(operations, new() { IsOrdered = false });
     }
 
     public static void InsertOrUpdateMany<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)

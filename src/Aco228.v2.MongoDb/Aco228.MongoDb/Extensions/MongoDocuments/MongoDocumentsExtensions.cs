@@ -7,7 +7,7 @@ namespace Aco228.MongoDb.Extensions.MongoDocuments;
 
 public static class MongoDocumentsExtensions
 {
-    public static IMongoRepo<TDocument> GetRepo<TDocument>(this TDocument mongoDocument)
+    internal static IMongoRepo<TDocument> GetRepo<TDocument>()
         where TDocument : MongoDocument
         => ServiceProviderHelper.GetService<IMongoRepo<TDocument>>()!;
 
@@ -18,30 +18,38 @@ public static class MongoDocumentsExtensions
         return obj.AnyChanges();
     }
     
-    public static Task InsertOrUpdateAsync(this MongoDocument mongoDocument)
-        => mongoDocument.GetRepo().InsertOrUpdateAsync(mongoDocument);
+    public static Task InsertOrUpdateAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
+        => GetRepo<TDocument>().InsertOrUpdateAsync(mongoDocument);
     
-    public static void InsertOrUpdate(this MongoDocument mongoDocument)
-        => mongoDocument.GetRepo().InsertOrUpdate(mongoDocument);
+    public static void InsertOrUpdate<TDocument>(this TDocument mongoDocument) where TDocument: MongoDocument
+        => GetRepo<TDocument>().InsertOrUpdate(mongoDocument);
     
-    public static Task InsertOrUpdateFieldsAsync(this MongoDocument mongoDocument)
-        => mongoDocument.GetRepo().InsertOrUpdateFieldsAsync(mongoDocument);
+    public static Task UpdateFieldsAsync<TDocument>(this TDocument mongoDocument) where TDocument: MongoDocument
+        => GetRepo<TDocument>().UpdateFieldsAsync(mongoDocument);
 
-    public static Task InsertOrUpdateManyAsync<TDocument>(this IEnumerable<TDocument> documents)
+    public static Task InsertOrUpdateAsync<TDocument>(this IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
     {
         var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
         if(!mongoDocuments.Any()) return Task.FromResult(true);
-        return mongoDocuments.First().GetRepo().InsertOrUpdateManyAsync(mongoDocuments);
+        return GetRepo<TDocument>().InsertOrUpdateManyAsync(mongoDocuments);
     }
+    
 
-    public static IEnumerable<TDocument> StartTracking<TDocument>(this IEnumerable<TDocument> documents)
+    public static Task UpdateFieldsAsync<TDocument>(this IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
     {
         var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
+        if(!mongoDocuments.Any()) return Task.FromResult(true);
+        return GetRepo<TDocument>().UpdateFieldsManyAsync(mongoDocuments);
+    }
+    
+    public static void StartTracking<TDocument>(this IEnumerable<TDocument>? documents)
+        where TDocument : MongoDocumentInternal
+    {
+        if (documents == null) return;
+        var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
         foreach (var doc in mongoDocuments)
             doc.StartTracking();
-        
-        return mongoDocuments;
     }
 }

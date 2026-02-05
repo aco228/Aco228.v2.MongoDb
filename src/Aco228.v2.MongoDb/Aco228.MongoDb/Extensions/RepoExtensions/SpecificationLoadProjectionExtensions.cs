@@ -24,7 +24,7 @@ internal static class SpecificationLoadProjectionExtensions
         if(document == null)
             throw new InvalidOperationException($"Project document of LoadSpecification is null");
         
-        return spec.ProjectMapper.CreateObjectFrom(document);
+        return spec.ProjectMapper.CreateObjectFrom(document, spec.TrackValues);
     }
     
     public static IEnumerable<TProjection> ProjectEnumerable<TDocument, TProjection>(this IEnumerable<object> input, LoadSpecification<TDocument, TProjection> spec)
@@ -34,7 +34,7 @@ internal static class SpecificationLoadProjectionExtensions
         if (typeof(TProjection) == typeof(TDocument))
         {
             if (spec.TrackValues)
-                input = (input as IEnumerable<TDocument>).StartTracking();
+                (input as IEnumerable<TDocument>).StartTracking();
             return input as IEnumerable<TProjection>;
         }
 
@@ -45,7 +45,7 @@ internal static class SpecificationLoadProjectionExtensions
         if(documents == null)
             throw new InvalidOperationException($"Project document of LoadSpecification is null");
         
-        return spec.ProjectMapper.CreateObjectsFrom(documents);
+        return spec.ProjectMapper.CreateObjectsFrom(documents, spec.TrackValues);
     }
     
     public static List<TProjection> ProjectList<TDocument, TProjection>(this IEnumerable<object> input, LoadSpecification<TDocument, TProjection> spec)
@@ -56,6 +56,7 @@ internal static class SpecificationLoadProjectionExtensions
         {
             if (spec.TrackValues)
                 (input as IEnumerable<TDocument>).StartTracking();
+            
             return input as List<TProjection>;
         }
 
@@ -66,6 +67,6 @@ internal static class SpecificationLoadProjectionExtensions
         if(documents == null)
             throw new InvalidOperationException($"Project document of LoadSpecification is null");
         
-        return spec.ProjectMapper.CreateObjectsFrom(documents).ToList();
+        return spec.ProjectMapper.CreateObjectsFrom(documents, spec.TrackValues).ToList();
     }
 }

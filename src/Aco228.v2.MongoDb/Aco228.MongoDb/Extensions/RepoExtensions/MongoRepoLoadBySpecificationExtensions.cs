@@ -69,10 +69,12 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TProjection : class
         => spec.GetCursor().CountDocumentsAsync();
 
-    public static TProjection? FirstOrDefault<TDocument, TProjection>(this LoadSpecification<TDocument, TProjection> spec)
+    public static TProjection? FirstOrDefault<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.GetCursor().FirstOrDefault().ProjectSingle(spec);
+        => spec.FilterBy(filter).GetCursor().FirstOrDefault().ProjectSingle(spec);
 
     public static async Task<TProjection?> FirstOrDefaultAsync<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,

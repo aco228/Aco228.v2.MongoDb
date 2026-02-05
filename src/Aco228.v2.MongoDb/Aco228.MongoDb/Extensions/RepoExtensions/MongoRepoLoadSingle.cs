@@ -13,7 +13,7 @@ public static class MongoRepoLoadSingle
         Expression<Func<TDocument, bool>> filter) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Count();
+        return repo.NoTrack().FilterBy(filter).Count();
     }
     
     public static Task<long> CountAsync<TDocument>(
@@ -21,7 +21,7 @@ public static class MongoRepoLoadSingle
         Expression<Func<TDocument, bool>> filter) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).CountAsync();
+        return repo.NoTrack().FilterBy(filter).CountAsync();
     }
     
     public static TDocument? FirstOrDefault<TDocument>(
@@ -30,7 +30,7 @@ public static class MongoRepoLoadSingle
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).FirstOrDefault();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).FirstOrDefault();
     }
 
     public static Task<TDocument?> FirstOrDefaultAsync<TDocument>(
@@ -39,7 +39,7 @@ public static class MongoRepoLoadSingle
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).FirstOrDefaultAsync();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).FirstOrDefaultAsync();
     }
     
     public static Task<TDocument?> FindById<TDocument>(

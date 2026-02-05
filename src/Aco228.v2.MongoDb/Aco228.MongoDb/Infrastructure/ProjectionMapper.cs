@@ -34,16 +34,18 @@ internal class ProjectionMapper<TProject, TDocument> where TDocument : MongoDocu
         return projection;
     }
 
-    public IEnumerable<TProject> CreateObjectsFrom(IEnumerable<TDocument> documents)
+    public IEnumerable<TProject> CreateObjectsFrom(IEnumerable<TDocument> documents, bool track)
     {
         var list = new List<TProject>();
+        var canBeTracked = (typeof(MongoDocumentInternal).IsAssignableFrom(typeof(TDocument)));
+        
         foreach (var doc in documents)
-            list.Add(CreateObjectFrom(doc));
+            list.Add(CreateObjectFrom(doc, track && canBeTracked));
 
         return list;
     }
 
-    public TProject CreateObjectFrom(TDocument document)
+    public TProject CreateObjectFrom(TDocument document, bool track)
     {
         if (document == null) return default;
         var result = Activator.CreateInstance<TProject>();
@@ -55,6 +57,9 @@ internal class ProjectionMapper<TProject, TDocument> where TDocument : MongoDocu
             
             propertyInfo.SetValue(result, documentProp.GetValue(document));
         }
+        
+        if(track)
+            (result as MongoDocumentInternal)?.StartTracking();
 
         return result;
     }

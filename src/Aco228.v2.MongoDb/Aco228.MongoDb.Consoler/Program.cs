@@ -20,22 +20,19 @@ builder.RegisterRepositoriesFromAssembly<ILocalDbContext>();
 var serviceProvider = await builder.BuildCollection();
 
 var userRepo = serviceProvider.GetService<IMongoRepo<UserDocument>>()!;
-var allUsers = userRepo.Track().ToList();
+var users = userRepo.TrackProject<UserProjection>().ToList();
 
 int index = 0;
-foreach (var userDocument in allUsers)
+var rnd = new Random();
+foreach (var userProjection in users)
 {
     index++;
-    if (index % 2 == 0)
-    {
-        Console.WriteLine($"Updating {userDocument.Id}");
-        userDocument.SomeData = "RokiBejbe + " + Guid.NewGuid();
-    }
-    else
-    {
-        Console.WriteLine($"Ignoring {userDocument.Id}");
-    }
+    if (index % 2 == 0) continue;
+    userProjection.DasIstIndex = rnd.Next(1, 100);
 }
 
-await allUsers.InsertOrUpdateManyAsync();
+
+await users.UpdateAsync();
+
+// await allUsers.UpdateFieldsAsync();
 Console.WriteLine("Hello, World!");

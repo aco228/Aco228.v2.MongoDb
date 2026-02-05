@@ -8,10 +8,6 @@ namespace Aco228.MongoDb.Models;
 [BsonIgnoreExtraElements]
 public abstract class MongoDocument : MongoDocumentInternal
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.String)]
-    public ObjectId Id { get; set; }
-    
     [MongoIndex] public long CreatedUtc { get; set; }
     [MongoIndex] public long UpdatedUtc { get; set; }
 }

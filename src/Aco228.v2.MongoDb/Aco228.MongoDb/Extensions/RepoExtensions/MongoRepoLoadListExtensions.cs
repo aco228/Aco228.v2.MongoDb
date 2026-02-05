@@ -15,7 +15,7 @@ public static class MongoRepoLoadListExtensions
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).OrderByPropertyName(orderDirection, parameterName).ToEnumerable().ToList();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).OrderByPropertyName(orderDirection, parameterName).ToEnumerable().ToList();
     }
     
     public static Task<List<TDocument>> FilterAndOrderAsync<TDocument>(
@@ -26,7 +26,7 @@ public static class MongoRepoLoadListExtensions
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).OrderByPropertyName(orderDirection, parameterName).ToListAsync();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).OrderByPropertyName(orderDirection, parameterName).ToListAsync();
     }
     
     public static List<TDocument> FilterBy<TDocument>(
@@ -35,7 +35,7 @@ public static class MongoRepoLoadListExtensions
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).ToEnumerable().ToList();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).ToEnumerable().ToList();
     }
     
     public static Task<List<TDocument>> FilterByAsync<TDocument>(
@@ -44,6 +44,6 @@ public static class MongoRepoLoadListExtensions
         int? limit = null) 
         where TDocument : MongoDocument
     {
-        return repo.Load().FilterBy(filter).Limit(limit).ToListAsync();
+        return repo.NoTrack().FilterBy(filter).Limit(limit).ToListAsync();
     }
 }

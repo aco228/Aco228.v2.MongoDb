@@ -30,6 +30,9 @@ public class MongoTrackingObject
     {
         foreach (var entry in _properties)
         {
+            if (IgnoreProperties.Contains(entry.PropertyInfo.Name))
+                continue;
+            
             var value = entry.PropertyInfo.GetValue(_document);
             _originalValues[entry.PropertyInfo.Name] = StoreValue(value, entry.PropertyInfo.PropertyType);
         }
@@ -60,7 +63,7 @@ public class MongoTrackingObject
                 continue;
 
             if (!AreValuesEqual(originalValue, currentValue))
-                yield return new ChangedField(prop.Name, originalValue, currentValue);
+                yield return new ChangedField(entry.ColumnName, originalValue, currentValue);
         }
     }
 

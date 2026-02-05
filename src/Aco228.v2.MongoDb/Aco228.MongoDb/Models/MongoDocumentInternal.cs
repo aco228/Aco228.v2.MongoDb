@@ -1,8 +1,15 @@
-﻿namespace Aco228.MongoDb.Models;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace Aco228.MongoDb.Models;
 
 
 public class MongoDocumentInternal
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.String)]
+    public ObjectId Id { get; set; }
+    
     private MongoTrackingObject? _trackingObject;
 
     public bool HasTracking() => _trackingObject?.HasTracking() == true;
