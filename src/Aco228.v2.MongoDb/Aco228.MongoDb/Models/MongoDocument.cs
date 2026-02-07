@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Models.Attributes;
+﻿using System.Text.Json.Serialization;
+using Aco228.MongoDb.Models.Attributes;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -8,6 +9,9 @@ namespace Aco228.MongoDb.Models;
 [BsonIgnoreExtraElements]
 public abstract class MongoDocument : MongoDocumentInternal
 {
-    [MongoIndex] public long CreatedUtc { get; set; }
-    [MongoIndex] public long UpdatedUtc { get; set; }
+    [MongoIndex] [JsonIgnore]
+    public long CreatedUtc { get; set; }
+    
+    [MongoIndex] [JsonIgnore] 
+    public long UpdatedUtc { get; set; }
 }

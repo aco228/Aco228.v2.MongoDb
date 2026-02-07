@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using System.Text.Json.Serialization;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aco228.MongoDb.Models;
@@ -6,7 +7,7 @@ namespace Aco228.MongoDb.Models;
 
 public class MongoDocumentInternal
 {
-    [BsonId]
+    [BsonId] [JsonIgnore]
     [BsonRepresentation(BsonType.String)]
     public ObjectId Id { get; set; }
     
