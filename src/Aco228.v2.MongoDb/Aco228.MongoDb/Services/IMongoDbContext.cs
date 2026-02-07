@@ -53,6 +53,9 @@ public abstract class MongoDbContext : IMongoDbContext
     protected abstract string GetConnectionString();
     protected virtual MongoClientSettings ConfigureClientSettings(MongoClientSettings settings) => settings;
 
+    protected string GetConnectionStringFromEnv(string envName)
+        => Environment.GetEnvironmentVariable(envName) ?? throw new Exception($"Environment variable {envName} is not set");
+
     public void Dispose()
     {
         _client?.Dispose();
