@@ -11,6 +11,12 @@ namespace Aco228.MongoDb.Helpers;
 
 public static class MongoRepoHelpers
 {
+    public static IMongoRepo<TDocument> GetRepo<TDocument>()
+        where TDocument : MongoDocument
+    {
+        return ServiceProviderHelper.GetService<IMongoRepo<TDocument>>();
+    }
+    
     public static IMongoRepo<TDocument> CreateRepo<TDocument, TDbContext>()
         where TDbContext : IMongoDbContext
         where TDocument : MongoDocument

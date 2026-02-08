@@ -11,10 +11,10 @@ public static class MongoDocumentsExtensions
         where TDocument : MongoDocument
         => ServiceProviderHelper.GetService<IMongoRepo<TDocument>>()!;
 
-    public static bool HasTrackingAndAnyChanges(this MongoDocumentInternal mongoDocument)
+    public static bool ShouldUpdateIfThereIsTrackingOrChanges(this MongoDocumentInternal mongoDocument)
     {
         var obj = mongoDocument.GetTrackingObject();
-        if(obj == null) return false;
+        if(obj == null) return true;
         return obj.AnyChanges();
     }
     

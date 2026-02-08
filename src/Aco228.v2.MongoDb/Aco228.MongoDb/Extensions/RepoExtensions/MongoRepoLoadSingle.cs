@@ -42,12 +42,40 @@ public static class MongoRepoLoadSingle
         return repo.NoTrack().FilterBy(filter).Limit(limit).FirstOrDefaultAsync();
     }
     
-    public static Task<TDocument?> FindById<TDocument>(
+    public static TDocument? FindById<TDocument>(
         this IMongoRepo<TDocument> repo, 
         ObjectId objectId) 
         where TDocument : MongoDocument
     {
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
+        return repo.GetCollection().Find(filter).SingleOrDefault();
+    }
+    
+    public static TDocument? FindById<TDocument>(
+        this IMongoRepo<TDocument> repo, 
+        string id) 
+        where TDocument : MongoDocument
+    {
+        var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, ObjectId.Parse(id));
+        return repo.GetCollection().Find(filter).SingleOrDefault();
+    }
+    
+    public static Task<TDocument?> FindByIdAsync<TDocument>(
+        this IMongoRepo<TDocument> repo, 
+        ObjectId objectId) 
+        where TDocument : MongoDocument
+    {
+        var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
+        return repo.GetCollection().Find(filter).SingleOrDefaultAsync();
+    }
+    
+    
+    public static Task<TDocument?> FindByIdAsync<TDocument>(
+        this IMongoRepo<TDocument> repo, 
+        string objectId) 
+        where TDocument : MongoDocument
+    {
+        var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, ObjectId.Parse(objectId));
         return repo.GetCollection().Find(filter).SingleOrDefaultAsync();
     }
     

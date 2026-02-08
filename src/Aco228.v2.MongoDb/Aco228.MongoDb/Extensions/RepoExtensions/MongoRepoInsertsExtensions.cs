@@ -13,7 +13,7 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         document.CheckIfNewAndPrepareForInsert();
         
-        if(!document.HasTrackingAndAnyChanges())
+        if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return;
         
         document.GetTrackingObject()?.ResetTracking();
@@ -27,7 +27,7 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         document.CheckIfNewAndPrepareForInsert();
         
-        if(!document.HasTrackingAndAnyChanges())
+        if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return Task.FromResult(true);
         
         document.GetTrackingObject()?.ResetTracking();
@@ -115,7 +115,7 @@ public static class MongoRepoInsertsExtensions
                 operations.Add(new InsertOneModel<TDocument>(document));
             else
             {
-                if (!document.HasTrackingAndAnyChanges())
+                if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
@@ -145,7 +145,7 @@ public static class MongoRepoInsertsExtensions
                 operations.Add(new InsertOneModel<TDocument>(document));
             else
             {
-                if (!document.HasTrackingAndAnyChanges())
+                if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
