@@ -1,4 +1,5 @@
-﻿using Aco228.Common;
+﻿using System.Text.Json;
+using Aco228.Common;
 using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
@@ -52,4 +53,11 @@ public static class MongoDocumentsExtensions
         foreach (var doc in mongoDocuments)
             doc.StartTracking();
     }
+    
+    public static string ToJsonString<T>(this T input)
+        where T : MongoDocument
+        => JsonSerializer.Serialize(input, new JsonSerializerOptions()
+        {
+            WriteIndented = true
+        });
 }
