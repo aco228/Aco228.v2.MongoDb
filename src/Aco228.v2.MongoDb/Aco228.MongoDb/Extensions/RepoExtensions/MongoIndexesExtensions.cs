@@ -24,6 +24,7 @@ public static class MongoIndexesExtensions
         if(documentType.IsInterface || documentType.IsAbstract)
             return;
         
+        
         Console.WriteLine($"Configuring {documentType.Name}.{attribute.CollectionName}");
         var indexProps = documentType.GetPropertyWithAttribute<MongoIndexAttribute>();
         var collection = dbContext.GetDatabase().GetCollection<BsonDocument>(attribute.CollectionName);
