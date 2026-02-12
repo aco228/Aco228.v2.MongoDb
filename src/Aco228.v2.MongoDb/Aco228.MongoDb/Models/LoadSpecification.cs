@@ -17,6 +17,7 @@ public class LoadSpecification<TDocument, TProjection>
 
     private int? _limit;
     private int? _skip;
+    private bool _loadFull = false;
     private List<Expression<Func<TDocument, bool>>> _expressions = new();
     private SortDefinition<TDocument>? _sort;
     private ProjectionDefinition<TDocument>? _projectionDefinition;
@@ -29,7 +30,7 @@ public class LoadSpecification<TDocument, TProjection>
         TrackValues = trackValues;
         Repo = repo;
     }
-
+    
     internal LoadSpecification<TDocument, TProjection> SetRepo(IMongoRepo<TDocument> repo)
     {
         Repo = repo;
@@ -46,6 +47,12 @@ public class LoadSpecification<TDocument, TProjection>
     public LoadSpecification<TDocument, TProjection> Limit(int? limit)
     {
         _limit = limit;
+        return this;
+    }
+    
+    public LoadSpecification<TDocument, TProjection> Full()
+    {
+        _loadFull = true;
         return this;
     }
 
@@ -159,7 +166,7 @@ public class LoadSpecification<TDocument, TProjection>
 
         if (typeof(TDocument) == typeof(TProjection))
         {
-            if (liteProjection == null)
+            if (_loadFull || liteProjection == null)
                 return (IFindFluent<TDocument, TProjection>) (object) cursor;
             
             return cursor.Project<TProjection>(liteProjection);
@@ -179,7 +186,9 @@ public class LoadSpecification<TDocument, TProjection>
         var filters = BuildFilter();
         var findOptions = new FindOptions<TDocument, TProjection>();
 
-        if (typeof(TDocument) != typeof(TProjection))
+        if (!_loadFull && liteProjection != null)
+            findOptions.Projection = liteProjection;
+        else if (typeof(TDocument) != typeof(TProjection))
             findOptions.Projection = _projectionDefinition;
     
         if (_sort != null) findOptions.Sort = _sort;

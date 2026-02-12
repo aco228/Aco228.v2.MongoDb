@@ -21,6 +21,9 @@ internal static class SpecificationLoadProjectionExtensions
 
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");
+
+        if (input is TProjection)
+            return input as TProjection;
         
         TDocument document = input as TDocument;
         if(document == null)
@@ -43,6 +46,9 @@ internal static class SpecificationLoadProjectionExtensions
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");
         
+        if(input is IEnumerable<TProjection>)
+            return input as List<TProjection>;
+        
         IEnumerable<TDocument> documents = input as IEnumerable<TDocument>;
         if(documents == null)
             throw new InvalidOperationException($"Project document of LoadSpecification is null");
@@ -64,6 +70,9 @@ internal static class SpecificationLoadProjectionExtensions
 
         if (spec.ProjectMapper == null)
             throw new InvalidOperationException($"Project mapper of LoadSpecification is null");
+        
+        if(input is IEnumerable<TProjection>)
+            return input as List<TProjection>;
         
         IEnumerable<TDocument> documents = input as IEnumerable<TDocument>;
         if(documents == null)
