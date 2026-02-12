@@ -186,10 +186,10 @@ public class LoadSpecification<TDocument, TProjection>
         var filters = BuildFilter();
         var findOptions = new FindOptions<TDocument, TProjection>();
 
-        if (!_loadFull && liteProjection != null)
-            findOptions.Projection = liteProjection;
-        else if (typeof(TDocument) != typeof(TProjection))
+        if (typeof(TDocument) != typeof(TProjection))
             findOptions.Projection = _projectionDefinition;
+        else if (_loadFull || liteProjection == null)
+            findOptions.Projection = liteProjection;
     
         if (_sort != null) findOptions.Sort = _sort;
         if (_limit.HasValue) findOptions.Limit = _limit.Value;
