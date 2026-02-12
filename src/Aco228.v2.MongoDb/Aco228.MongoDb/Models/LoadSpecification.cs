@@ -188,7 +188,7 @@ public class LoadSpecification<TDocument, TProjection>
 
         if (typeof(TDocument) != typeof(TProjection))
             findOptions.Projection = _projectionDefinition;
-        else if (_loadFull || liteProjection == null)
+        else if (!_loadFull && liteProjection != null)
             findOptions.Projection = liteProjection;
     
         if (_sort != null) findOptions.Sort = _sort;
