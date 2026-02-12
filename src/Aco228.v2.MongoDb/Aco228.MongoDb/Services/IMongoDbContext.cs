@@ -49,7 +49,6 @@ public abstract class MongoDbContext : IMongoDbContext
         }
     }
     
-    
     protected abstract string GetConnectionString();
     protected virtual MongoClientSettings ConfigureClientSettings(MongoClientSettings settings) => settings;
 
