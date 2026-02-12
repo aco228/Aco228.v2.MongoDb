@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Aco228.MongoDb.Helpers;
 using Aco228.MongoDb.Infrastructure;
 using Aco228.MongoDb.Services;
 using MongoDB.Bson;
@@ -19,6 +20,7 @@ public class LoadSpecification<TDocument, TProjection>
     private List<Expression<Func<TDocument, bool>>> _expressions = new();
     private SortDefinition<TDocument>? _sort;
     private ProjectionDefinition<TDocument>? _projectionDefinition;
+    private List<string> _includeMembers = new();
 
     public LoadSpecification() { }
 
@@ -70,6 +72,13 @@ public class LoadSpecification<TDocument, TProjection>
             _sort = Builders<TDocument>.Sort.Ascending(propertyName);
         else
             _sort = Builders<TDocument>.Sort.Descending(propertyName);
+        return this;
+    }
+
+    public LoadSpecification<TDocument, TProjection> Include<TKey>(Expression<Func<TDocument, TKey>> keySelector)
+    {
+        var memberExpression = keySelector.Body as MemberExpression ?? throw new ArgumentException("Expression must be a simple property access (e.g., x => x.PropertyName)", nameof(keySelector));
+        _includeMembers.Add(memberExpression.Member.Name);
         return this;
     }
 
@@ -139,7 +148,8 @@ public class LoadSpecification<TDocument, TProjection>
     {
         FilterBy(filter);
         PrepareProjection();
-    
+
+        var liteProjection = MongoLiteHelper.GetLiteProjectionFor<TDocument>(_includeMembers);
         var filters = BuildFilter();
         var cursor = Repo.GetCollection().Find(filters);
     
@@ -147,9 +157,15 @@ public class LoadSpecification<TDocument, TProjection>
         if (_limit.HasValue) cursor = cursor.Limit(_limit.Value);
         if (_skip.HasValue) cursor = cursor.Skip(_skip.Value);
 
-        return typeof(TDocument) == typeof(TProjection) 
-            ? (IFindFluent<TDocument, TProjection>)(object)cursor
-            : cursor.Project<TProjection>(_projectionDefinition);
+        if (typeof(TDocument) == typeof(TProjection))
+        {
+            if (liteProjection == null)
+                return (IFindFluent<TDocument, TProjection>) (object) cursor;
+            
+            return cursor.Project<TProjection>(liteProjection);
+        }
+        
+        return cursor.Project<TProjection>(_projectionDefinition);
     }
 
     internal virtual async Task<IAsyncCursor<TProjection>> GetCursorAsync(
@@ -159,6 +175,7 @@ public class LoadSpecification<TDocument, TProjection>
         FilterBy(filter);
         PrepareProjection();
     
+        var liteProjection = MongoLiteHelper.GetLiteProjectionFor<TDocument>(_includeMembers);
         var filters = BuildFilter();
         var findOptions = new FindOptions<TDocument, TProjection>();
 

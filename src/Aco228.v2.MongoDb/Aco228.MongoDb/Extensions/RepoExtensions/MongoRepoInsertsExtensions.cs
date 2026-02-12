@@ -11,7 +11,13 @@ public static class MongoRepoInsertsExtensions
         where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
-        document.CheckIfNewAndPrepareForInsert();
+        var isNew = document.CheckIfNewAndPrepareForInsert();
+
+        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+        {
+            repo.UpdateFields(document);
+            return;
+        }
         
         if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return;
@@ -25,7 +31,12 @@ public static class MongoRepoInsertsExtensions
         where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
-        document.CheckIfNewAndPrepareForInsert();
+        var isNew = document.CheckIfNewAndPrepareForInsert();
+        
+        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+        {
+            return repo.UpdateFieldsAsync(document);
+        }
         
         if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return Task.FromResult(true);
@@ -35,20 +46,58 @@ public static class MongoRepoInsertsExtensions
         return repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
     }
 
-    public static async Task UpdateFieldsAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
+    public static void UpdateFields<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
         where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
         if (document.CheckIfNewAndPrepareForInsert())
         {
-            await repo.InsertOrUpdateAsync( document);
+            repo.InsertOrUpdate(document);
             return;
         }
         
         var trackObject = document.GetTrackingObject();
         if (trackObject == null)
         {
-            await repo.InsertOrUpdateAsync( document);
+            if(typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                throw new InvalidOperationException("MongoLite must have tracking object");
+            
+            repo.InsertOrUpdateAsync(document);
+            return;
+        }
+        
+        var changedFields = trackObject.GetChangedFields();
+        if (!changedFields.Any())
+            return;
+
+        foreach (var field in changedFields)
+            Console.WriteLine($"Changing {field.PropertyName} from {field.OldValue} to {field.NewValue}");
+
+        var updater = Builders<TDocument>.Update;
+        var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue));
+        
+        repo.GetCollection().UpdateOne(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
+        trackObject.ResetTracking();
+    }
+    
+
+    public static async Task UpdateFieldsAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
+        where TDocument : MongoDocument
+    {
+        repo.GuardConfiguration();
+        if (document.CheckIfNewAndPrepareForInsert())
+        {
+            await repo.InsertOrUpdateAsync(document);
+            return;
+        }
+        
+        var trackObject = document.GetTrackingObject();
+        if (trackObject == null)
+        {
+            if(typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                throw new InvalidOperationException("MongoLite must have tracking object");
+            
+            await repo.InsertOrUpdateAsync(document);
             return;
         }
         
@@ -65,7 +114,6 @@ public static class MongoRepoInsertsExtensions
         await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
         trackObject.ResetTracking();
     }
-    
 
     public static async Task UpdateFieldsManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
@@ -77,7 +125,12 @@ public static class MongoRepoInsertsExtensions
         foreach (var document in documents)
         {
             var trackObject = document.GetTrackingObject();
-            if (document.CheckIfNewAndPrepareForInsert() || trackObject == null)
+            var isNew = document.CheckIfNewAndPrepareForInsert();
+            
+            if (!isNew && trackObject == null && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                throw new InvalidOperationException("MongoLite must have tracking object");
+            
+            if (isNew || trackObject == null)
             {
                 inserts.Add(document);
                 continue;
@@ -107,7 +160,8 @@ public static class MongoRepoInsertsExtensions
         var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
         if(!mongoDocuments.Any())
             return;
-        
+
+        var updateFieldsOps = new List<TDocument>();
         var operations = new List<WriteModel<TDocument>>();
         foreach (var document in mongoDocuments)
         {
@@ -118,11 +172,20 @@ public static class MongoRepoInsertsExtensions
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
+                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                {
+                    updateFieldsOps.Add(document);
+                    continue;
+                }
+                
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
                 operations.Add(new ReplaceOneModel<TDocument>(filter, document));
                 document.GetTrackingObject()?.ResetTracking();
             }
         }
+        
+        if(updateFieldsOps.Any())
+            throw new InvalidOperationException("MongoLite must have tracking object");
 
         if(!operations.Any())
             return;
@@ -130,15 +193,17 @@ public static class MongoRepoInsertsExtensions
         var result = repo.GetCollection().BulkWrite(operations, new() { IsOrdered = false });
     }
 
-    public static Task InsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
+    public static async Task InsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
         var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
         if(!mongoDocuments.Any())
-            return Task.FromResult(0);
+            return;
         
         var operations = new List<WriteModel<TDocument>>();
+        var updateFieldsOps = new List<TDocument>();
+        
         foreach (var document in mongoDocuments)
         {
             if (document.CheckIfNewAndPrepareForInsert())
@@ -148,15 +213,25 @@ public static class MongoRepoInsertsExtensions
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
+                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                {
+                    updateFieldsOps.Add(document);
+                    continue;
+                }
+                
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
                 operations.Add(new ReplaceOneModel<TDocument>(filter, document));
                 document.GetTrackingObject()?.ResetTracking();
             }
         }
-
-        if(!operations.Any())
-            return Task.FromResult(0);
         
-        return repo.GetCollection()!.BulkWriteAsync(operations, new() { IsOrdered = false });
+        if(updateFieldsOps.Any())
+            await repo.UpdateFieldsManyAsync( updateFieldsOps);
+
+
+        if (!operations.Any())
+            return;
+        
+        await repo.GetCollection()!.BulkWriteAsync(operations, new() { IsOrdered = false });
     }
 }

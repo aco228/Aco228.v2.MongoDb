@@ -15,3 +15,10 @@ public abstract class MongoDocument : MongoDocumentInternal
     [MongoIndex] [JsonIgnore] 
     public long UpdatedUtc { get; set; }
 }
+
+[Serializable]
+[BsonIgnoreExtraElements]
+public abstract class MongoLite : MongoDocument
+{
+    
+}

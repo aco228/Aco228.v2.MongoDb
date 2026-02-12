@@ -2,6 +2,7 @@
 using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Aco228.MongoDb.Extensions;
@@ -75,6 +76,20 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TDocument : MongoDocument
         where TProjection : class
         => spec.FilterBy(filter).GetCursor().FirstOrDefault().ProjectSingle(spec);
+    
+    public static TProjection? FindById<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        string id)
+        where TDocument : MongoDocument
+        where TProjection : class
+        => spec.FilterBy(x => x.Id == ObjectId.Parse(id)).GetCursor().FirstOrDefault().ProjectSingle(spec);
+    
+    public static TProjection? FindById<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        ObjectId id)
+        where TDocument : MongoDocument
+        where TProjection : class
+        => spec.FilterBy(x => x.Id == id).GetCursor().FirstOrDefault().ProjectSingle(spec);
 
     public static async Task<TProjection?> FirstOrDefaultAsync<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,
@@ -83,6 +98,28 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TProjection : class
     {
         if (filter != null) spec.FilterBy(filter);
+        using var cursor = await spec.GetCursorAsync();
+        return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
+    }
+
+    public static async Task<TProjection?> FindByIdAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        string id)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        spec.FilterBy(x => x.Id == ObjectId.Parse(id));
+        using var cursor = await spec.GetCursorAsync();
+        return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
+    }
+
+    public static async Task<TProjection?> FindByIdAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        ObjectId id)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        spec.FilterBy(x => x.Id == id);
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
     }
