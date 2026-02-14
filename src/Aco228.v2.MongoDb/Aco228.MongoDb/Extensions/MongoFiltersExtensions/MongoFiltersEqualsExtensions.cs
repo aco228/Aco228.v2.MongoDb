@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Aco228.MongoDb.Extensions.FilterDefinitionExtensions;
 using Aco228.MongoDb.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -49,6 +50,22 @@ public static class MongoFiltersEqualsExtensions
         var filter = Builders<TDocument>.Filter.Or(
             Builders<TDocument>.Filter.Eq(name, BsonNull.Value),
             Builders<TDocument>.Filter.Eq(selector, val)
+        );
+        
+        spec.FilterDefinitions.Add(filter);
+        return spec;
+    }
+    
+    public static LoadSpecification<TDocument, TProjection> IsNull<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var name = selector.GetName();
+        var filter = Builders<TDocument>.Filter.Or(
+            Builders<TDocument>.Filter.Exists(name, false),
+            Builders<TDocument>.Filter.Eq(name, BsonNull.Value)
         );
         
         spec.FilterDefinitions.Add(filter);

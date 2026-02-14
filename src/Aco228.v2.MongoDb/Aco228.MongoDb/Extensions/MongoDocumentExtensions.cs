@@ -9,15 +9,25 @@ public static class MongoDocumentExtensions
     {
         if (document.Id == ObjectId.Empty)
         {
-            document.Id = ObjectId.GenerateNewId();
-            document.CreatedUtc = DT.GetUnix();
-            document.UpdatedUtc = DT.GetUnix();
             return true;
         }
         else
         {
-            document.UpdatedUtc = DT.GetUnix();
             return false;
+        }
+    }
+    
+    internal static void SetDocumentDefaultValues(MongoDocument document)
+    {
+        if (document.Id == ObjectId.Empty)
+        {
+            document.Id = ObjectId.GenerateNewId();
+            document.CreatedUtc = DT.GetUnix();
+            document.UpdatedUtc = DT.GetUnix();
+        }
+        else
+        {
+            document.UpdatedUtc = DT.GetUnix();
         }
     }
 }
