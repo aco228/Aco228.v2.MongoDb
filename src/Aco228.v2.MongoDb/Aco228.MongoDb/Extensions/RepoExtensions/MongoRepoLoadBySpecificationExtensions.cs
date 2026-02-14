@@ -60,15 +60,24 @@ public static class MongoLoadBySpecificationExtensions
 
 public static class MongoRepoLoadBySpecificationExtensions
 {
-    public static long Count<TDocument, TProjection>(this LoadSpecification<TDocument, TProjection> spec)
+    public static long Count<TDocument, TProjection>(this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.GetCursor().CountDocuments();
+    {
+        spec.FilterBy(filter);
+        return spec.GetCursor().CountDocuments();
+    }
 
-    public static Task<long> CountAsync<TDocument, TProjection>(this LoadSpecification<TDocument, TProjection> spec)
+    public static Task<long> CountAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.GetCursor().CountDocumentsAsync();
+    {
+        spec.FilterBy(filter);
+        return spec.GetCursor().CountDocumentsAsync();
+    }
 
     public static TProjection? FirstOrDefault<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,
