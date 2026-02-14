@@ -18,6 +18,24 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
+    public static LoadSpecification<TDocument, TProjection> NotNull<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var body = selector.Body is UnaryExpression unary ? unary.Operand : selector.Body;
+        var name = ((MemberExpression)body).Member.Name;
+        
+        var filter = Builders<TDocument>.Filter.And(
+            Builders<TDocument>.Filter.Exists(name),
+            Builders<TDocument>.Filter.Ne(name, BsonNull.Value)
+        );
+        
+        spec.FilterDefinitions.Add(filter);
+        return spec;
+    }
+    
     public static LoadSpecification<TDocument, TProjection> NullOrEq<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector, 

@@ -59,6 +59,13 @@ public class LoadSpecification<TDocument, TProjection>
         return this;
     }
     
+    public LoadSpecification<TDocument, TProjection> FilterBy(FilterDefinition<TDocument>? filter)
+    {
+        if (filter == null) return this;
+        FilterDefinitions.Add(filter);
+        return this;
+    }
+    
     public LoadSpecification<TDocument, TProjection> Limit(int? limit)
     {
         _limit = limit;
