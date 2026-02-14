@@ -25,8 +25,15 @@ public static class MongoFiltersEqualsExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        spec.FilterDefinitions.NullableConstruct(selector, true, false, Builders<TDocument>.Filter.Eq(selector, val));
-        spec.FilterDefinitions.NullableConstruct(selector, true, false, Builders<TDocument>.Filter.Eq(selector, val));
+        var body = selector.Body is UnaryExpression unary ? unary.Operand : selector.Body;
+        var name = ((MemberExpression)body).Member.Name;
+        
+        var filter = Builders<TDocument>.Filter.Or(
+            Builders<TDocument>.Filter.Eq(name, BsonNull.Value),
+            Builders<TDocument>.Filter.Eq(selector, val)
+        );
+        
+        spec.FilterDefinitions.Add(filter);
         return spec;
     }
     
@@ -37,7 +44,16 @@ public static class MongoFiltersEqualsExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        spec.FilterDefinitions.NullableConstruct(selector, true, true, Builders<TDocument>.Filter.Eq(selector, val));
+        var body = selector.Body is UnaryExpression unary ? unary.Operand : selector.Body;
+        var name = ((MemberExpression)body).Member.Name;
+        
+        var filter = Builders<TDocument>.Filter.And(
+            Builders<TDocument>.Filter.Exists(name),
+            Builders<TDocument>.Filter.Ne(name, BsonNull.Value),
+            Builders<TDocument>.Filter.Eq(selector, val)
+        );
+        
+        spec.FilterDefinitions.Add(filter);
         return spec;
     }
     
