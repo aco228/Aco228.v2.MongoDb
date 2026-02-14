@@ -72,7 +72,7 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
-    public static LoadSpecification<TDocument, TProjection> ExistsAndEq<TDocument, TProjection, TKey>(
+    public static LoadSpecification<TDocument, TProjection> NotNullEq<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector, 
         TKey val)
@@ -84,10 +84,30 @@ public static class MongoFiltersEqualsExtensions
         
         var filter = Builders<TDocument>.Filter.And(
             Builders<TDocument>.Filter.Exists(name),
-            Builders<TDocument>.Filter.Ne(name, BsonNull.Value),
             Builders<TDocument>.Filter.Eq(selector, val)
         );
         
+        spec.FilterDefinitions.Add(filter);
+        return spec;
+    }
+    
+    public static LoadSpecification<TDocument, TProjection> NotNullEq<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey?>> selector, 
+        TKey val)
+        where TDocument : MongoDocument
+        where TProjection : class
+        where TKey : struct
+    {
+        var field = new ExpressionFieldDefinition<TDocument>(selector);
+        var name = selector.GetName();
+    
+        var filter = Builders<TDocument>.Filter.And(
+            Builders<TDocument>.Filter.Exists(field),
+            Builders<TDocument>.Filter.Ne(name, BsonNull.Value),
+            Builders<TDocument>.Filter.Eq(selector, (TKey?)val)
+        );
+    
         spec.FilterDefinitions.Add(filter);
         return spec;
     }
