@@ -132,16 +132,20 @@ public class LoadSpecification<TDocument, TProjection>
     {
         if (filter != null) FilterBy(filter);
         
-        if (_expressions.Count == 0)
+        if (_expressions.Count == 0 && FilterDefinitions.Count == 0)
             return Builders<TDocument>.Filter.Empty;
 
-        if (_expressions.Count == 1)
-            return Builders<TDocument>.Filter.Where(_expressions[0]);
+        // var filters = _expressions
+        //     .Select(expr => Builders<TDocument>.Filter.Where(expr))
+        //     .ToList()
+        //     .GetAddRange(FilterDefinitions);
 
-        var filters = _expressions
-            .Select(expr => Builders<TDocument>.Filter.Where(expr))
-            .ToList()
-            .GetAddRange(FilterDefinitions);
+        var filters = FilterDefinitions.GetAddRange(
+            _expressions.Select(expr => Builders<TDocument>.Filter.Where(expr))
+        );
+        
+        if(!filters.Any())
+            return Builders<TDocument>.Filter.Empty;
 
         return Filter.And(filters);
     }

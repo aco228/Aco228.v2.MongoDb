@@ -4,11 +4,11 @@ using Aco228.MongoDb.Models;
 
 namespace Aco228.MongoDb.Services;
 
-public interface IMongoRepoTransactionalManager<T>
+public interface IMongoTransaction<T>
     where T : MongoDocument
 
 {
-    MongoRepoTransactionalManager<T> SetLimit(int limit);
+    MongoTransaction<T> SetLimit(int limit);
     
     void InsertOrUpdate(T document);
     void InsertOrUpdateMultiple(IEnumerable<T> documents);
@@ -25,21 +25,21 @@ public interface IMongoRepoTransactionalManager<T>
     Task FinishAsync();
 }
 
-public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T>
+public class MongoTransaction<T> : IMongoTransaction<T>
     where T : MongoDocument
 {
     private ConcurrentList<T> _insertRequests = new();
     private ConcurrentList<T> _deleteRequests = new();
-    private readonly IMongoRepo<T> _repo;
+    public IMongoRepo<T> Repo { get; private set; }
     private int CurrentCount => _insertRequests.Count + _deleteRequests.Count;
     private int _limit = 15;
 
-    public MongoRepoTransactionalManager(IMongoRepo<T> repo)
+    public MongoTransaction(IMongoRepo<T> repo)
     {
-        _repo = repo;
+        Repo = repo;
     }
 
-    public MongoRepoTransactionalManager<T> SetLimit(int limit)
+    public MongoTransaction<T> SetLimit(int limit)
     {
         _limit =  limit;
         return this;
@@ -100,13 +100,13 @@ public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T
 
         if (_insertRequests.Any())
         {
-            _repo.InsertOrUpdateMany(_insertRequests);
+            Repo.InsertOrUpdateMany(_insertRequests);
             _insertRequests.Clear();
         }
 
         if (_deleteRequests.Any())
         {
-            _repo.DeleteMany(_deleteRequests);
+            Repo.DeleteMany(_deleteRequests);
             _deleteRequests.Clear();
         }
     }
@@ -118,13 +118,13 @@ public class MongoRepoTransactionalManager<T> : IMongoRepoTransactionalManager<T
 
         if (_insertRequests.Any())
         {
-            await _repo.InsertOrUpdateManyAsync(_insertRequests);
+            await Repo.InsertOrUpdateManyAsync(_insertRequests);
             _insertRequests.Clear();
         }
 
         if (_deleteRequests.Any())
         {
-            await _repo.DeleteManyAsync(_deleteRequests);
+            await Repo.DeleteManyAsync(_deleteRequests);
             _deleteRequests.Clear();
         }
     }

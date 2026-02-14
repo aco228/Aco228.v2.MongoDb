@@ -48,6 +48,11 @@ public static class MongoRepoHelpers
             var repo = CreateRepo<TDocument, TDbContext>();
             return repo;
         });
+        services.AddTransient<IMongoTransaction<TDocument>>(provider =>
+        {
+            var repo = GetRepo<TDocument>();
+            return repo.GetTransactionalManager();
+        });
     }
 
     public static void RegisterRepositoriesFromAssembly<TDbContext>(this IServiceCollection services, Assembly? callerAssembly = null)

@@ -15,7 +15,7 @@ public interface IMongoRepo<TDocument>
     
     IMongoCollection<TDocument> GetCollection();
     IQueryable<TDocument> AsQueryable() => GetCollection().AsQueryable();
-    IMongoRepoTransactionalManager<TDocument> GetTransactionalManager() => new MongoRepoTransactionalManager<TDocument>(this);
+    IMongoTransaction<TDocument> GetTransactionalManager() => new MongoTransaction<TDocument>(this);
     
     public List<TDocument> LoadAll() => AsQueryable().ToList();
     public Task<List<TDocument>> LoadAllAsync() => AsQueryable().ToListAsync();
