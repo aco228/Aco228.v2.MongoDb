@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Aco228.Common.Extensions;
 using Aco228.MongoDb.Helpers;
 using Aco228.MongoDb.Infrastructure;
 using Aco228.MongoDb.Services;
@@ -18,6 +19,8 @@ public class LoadSpecification<TDocument, TProjection>
     private int? _limit;
     private int? _skip;
     private bool _loadFull = false;
+    public FilterDefinitionBuilder<TDocument> Filter { get; set; } = new ();
+    internal List<FilterDefinition<TDocument>> FilterDefinitions { get; set; } = new();
     private List<Expression<Func<TDocument, bool>>> _expressions = new();
     private SortDefinition<TDocument>? _sort;
     private ProjectionDefinition<TDocument>? _projectionDefinition;
@@ -34,6 +37,18 @@ public class LoadSpecification<TDocument, TProjection>
     internal LoadSpecification<TDocument, TProjection> SetRepo(IMongoRepo<TDocument> repo)
     {
         Repo = repo;
+        return this;
+    }
+
+    public LoadSpecification<TDocument, TProjection> FilterNullable(Expression<Func<TDocument, bool>> field)
+    {
+        var name = ((MemberExpression)field.Body).Member.Name;
+
+        var definition =  Builders<TDocument>.Filter.And(
+            Builders<TDocument>.Filter.Exists(name),
+            Builders<TDocument>.Filter.Where(field)
+        );
+        FilterDefinitions.Add(definition);
         return this;
     }
     
@@ -73,15 +88,6 @@ public class LoadSpecification<TDocument, TProjection>
         return this;
     }
 
-    public LoadSpecification<TDocument, TProjection> OrderByPropertyName(OrderDirection orderDirection, string propertyName)
-    {
-        if(orderDirection == OrderDirection.ASC)
-            _sort = Builders<TDocument>.Sort.Ascending(propertyName);
-        else
-            _sort = Builders<TDocument>.Sort.Descending(propertyName);
-        return this;
-    }
-
     public LoadSpecification<TDocument, TProjection> Include<TKey>(Expression<Func<TDocument, TKey>> keySelector)
     {
         var memberExpression = keySelector.Body as MemberExpression ?? throw new ArgumentException("Expression must be a simple property access (e.g., x => x.PropertyName)", nameof(keySelector));
@@ -96,18 +102,6 @@ public class LoadSpecification<TDocument, TProjection>
             _sort = Builders<TDocument>.Sort.Ascending(memberExpression.Member.Name);
         else
             _sort = Builders<TDocument>.Sort.Descending(memberExpression.Member.Name);
-        return this;
-    }
-
-    public LoadSpecification<TDocument, TProjection> OrderByPropertyNameAsc(string parameter)
-    {
-        _sort = Builders<TDocument>.Sort.Ascending(parameter);
-        return this;
-    }
-
-    public LoadSpecification<TDocument, TProjection> OrderByPropertyNameDesc(string parameter)
-    {
-        _sort = Builders<TDocument>.Sort.Descending(parameter);
         return this;
     }
 
@@ -146,9 +140,10 @@ public class LoadSpecification<TDocument, TProjection>
 
         var filters = _expressions
             .Select(expr => Builders<TDocument>.Filter.Where(expr))
-            .ToList();
+            .ToList()
+            .GetAddRange(FilterDefinitions);
 
-        return Builders<TDocument>.Filter.And(filters);
+        return Filter.And(filters);
     }
     
     internal virtual IFindFluent<TDocument, TProjection> GetCursor(Expression<Func<TDocument, bool>>? filter = null)
