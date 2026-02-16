@@ -26,6 +26,9 @@ public static class MongoFiltersEqualsExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
+        if (!val.Any())
+            return spec;
+        
         spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, val));
         return spec;
     }
@@ -38,6 +41,9 @@ public static class MongoFiltersEqualsExtensions
         where TProjection : class
         where TKey : struct
     {
+        if (!val.Any())
+            return spec;
+        
         spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, val.Cast<TKey?>()));
         return spec;
     }
