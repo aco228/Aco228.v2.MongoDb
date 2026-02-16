@@ -19,7 +19,12 @@ internal class ProjectionMapper<TProject, TDocument> where TDocument : MongoDocu
             var attribute = propertyInfo.GetCustomAttribute<ProjectMapAttribute>();
             if (attribute?.Ignore == true) 
                 continue;
-            _projectionProperties.Add(attribute?.PropertyName ?? propertyInfo.Name, propertyInfo);
+
+            var propertyName = attribute?.PropertyName ?? propertyInfo.Name;
+            if(_projectionProperties.ContainsKey(propertyName))
+                propertyName = $"{propertyName}_{Guid.NewGuid().ToString().Split("-").First()}";
+            
+            _projectionProperties.Add(propertyName, propertyInfo);
         }
     }
 
