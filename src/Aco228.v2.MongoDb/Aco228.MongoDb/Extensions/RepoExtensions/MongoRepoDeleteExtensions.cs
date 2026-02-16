@@ -14,6 +14,8 @@ public static class MongoRepoDeleteExtensions
     public static void DeleteById<TDocument>(this IMongoRepo<TDocument> repo, ObjectId objectId)
         where TDocument : MongoDocument
     {
+        if(objectId == ObjectId.Empty) return;
+        
         repo.GuardConfiguration();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
         repo.GetCollection().FindOneAndDelete(filter);
@@ -22,6 +24,8 @@ public static class MongoRepoDeleteExtensions
     public static Task DeleteByIdAsync<TDocument>(this IMongoRepo<TDocument> repo, ObjectId objectId)
         where TDocument : MongoDocument
     {
+        if(objectId == ObjectId.Empty) return Task.FromResult(true);
+        
         repo.GuardConfiguration();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
         return repo.GetCollection().FindOneAndDeleteAsync(filter);
@@ -45,7 +49,7 @@ public static class MongoRepoDeleteExtensions
         
         if (!mongoDocuments.Any()) return;
         repo.GuardConfiguration();
-        var ids = mongoDocuments.Select(d => d.Id).ToList();
+        var ids = mongoDocuments.Where(x => x.Id != ObjectId.Empty).Select(d => d.Id).ToList();
         var filter = Builders<TDocument>.Filter.In(d => d.Id, ids);
         repo.GetCollection().DeleteMany(filter);
     }
@@ -58,7 +62,7 @@ public static class MongoRepoDeleteExtensions
         
         if (!mongoDocuments.Any()) return Task.FromResult(true);
         repo.GuardConfiguration();
-        var ids = mongoDocuments.Select(d => d.Id).ToList();
+        var ids = mongoDocuments.Where(x => x.Id != BsonObjectId.Empty).Select(d => d.Id).ToList();
         var filter = Builders<TDocument>.Filter.In(d => d.Id, ids);
         return repo.GetCollection().DeleteManyAsync(filter);
     }

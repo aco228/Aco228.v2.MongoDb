@@ -14,6 +14,8 @@ public abstract class MongoDocument : MongoDocumentInternal
     
     [MongoIndex] [JsonIgnore] 
     public long UpdatedUtc { get; set; }
+
+    internal virtual bool CanBeDeleted { get; } = true;
 }
 
 [Serializable]
