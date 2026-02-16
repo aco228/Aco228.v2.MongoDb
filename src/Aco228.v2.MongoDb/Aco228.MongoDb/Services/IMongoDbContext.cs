@@ -40,10 +40,11 @@ public abstract class MongoDbContext : IMongoDbContext
         
             var pack = new ConventionPack
             {
-                new IgnoreIfNullConvention(true)
+                new IgnoreIfNullConvention(true),
+                new IgnoreExtraElementsConvention(true),
             };
 
-            ConventionRegistry.Register("Ignore null values globally", pack, t => true);
+            ConventionRegistry.Register("_", pack, t => true);
             _database = _client.GetDatabase(DatabaseName);
             return _database;
         }
