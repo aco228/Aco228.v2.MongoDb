@@ -19,6 +19,29 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
+    public static LoadSpecification<TDocument, TProjection> In<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector, 
+        IEnumerable<TKey> val)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, val));
+        return spec;
+    }
+    
+    public static LoadSpecification<TDocument, TProjection> NullableIn<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey?>> selector, 
+        IEnumerable<TKey> val)
+        where TDocument : MongoDocument
+        where TProjection : class
+        where TKey : struct
+    {
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, val.Cast<TKey?>()));
+        return spec;
+    }
+    
     public static LoadSpecification<TDocument, TProjection> NotNull<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector)

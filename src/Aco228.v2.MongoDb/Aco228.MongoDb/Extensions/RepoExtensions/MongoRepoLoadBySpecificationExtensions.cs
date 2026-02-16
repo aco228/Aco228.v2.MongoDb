@@ -91,14 +91,14 @@ public static class MongoRepoLoadBySpecificationExtensions
         string id)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.FilterBy(x => x.Id == ObjectId.Parse(id)).GetCursor().FirstOrDefault().ProjectSingle(spec);
+        => spec.FilterBy(Builders<TDocument>.Filter.Eq(x => x.Id, ObjectId.Parse(id))).GetCursor().FirstOrDefault().ProjectSingle(spec);
     
     public static TProjection? FindById<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,
         ObjectId id)
         where TDocument : MongoDocument
         where TProjection : class
-        => spec.FilterBy(x => x.Id == id).GetCursor().FirstOrDefault().ProjectSingle(spec);
+        => spec.FilterBy(Builders<TDocument>.Filter.Eq(x => x.Id, id)).GetCursor().FirstOrDefault().ProjectSingle(spec);
 
     public static async Task<TProjection?> FirstOrDefaultAsync<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,
@@ -117,7 +117,7 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        spec.FilterBy(x => x.Id == ObjectId.Parse(id));
+        spec.FilterBy(Builders<TDocument>.Filter.Eq(x => x.Id, ObjectId.Parse(id)));
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
     }
@@ -128,7 +128,7 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        spec.FilterBy(x => x.Id == id);
+        spec.FilterBy(Builders<TDocument>.Filter.Eq(x => x.Id, id));
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.FirstOrDefaultAsync()).ProjectSingle(spec);
     }
