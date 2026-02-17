@@ -90,7 +90,6 @@ public class MongoTrackingObject
         _originalValues.Clear();
         return this;
     }
-
     private static object? StoreValue(object? value)
     {
         if (value == null)
@@ -98,15 +97,10 @@ public class MongoTrackingObject
 
         var valueType = value.GetType();
 
-        if (typeof(System.Collections.ICollection).IsAssignableFrom(valueType) && valueType != typeof(string))
-        {
-            var cloner = _cloners.GetOrAdd(valueType, BuildCloner);
-            return cloner(value);
-        }
-
         if (valueType.IsValueType || valueType == typeof(string) || valueType == typeof(Guid) || valueType == typeof(ObjectId))
             return value;
 
+        // Serialize everything else (collections and complex objects) as JSON
         return JsonSerializer.Serialize(value);
     }
 
@@ -118,10 +112,11 @@ public class MongoTrackingObject
         if (oldValue == null || newValue == null)
             return false;
 
-        if (oldValue is string && newValue is not string)
+        // oldValue was stored as JSON string for complex objects
+        if (oldValue is string oldJson && newValue is not string)
         {
             var newJson = JsonSerializer.Serialize(newValue);
-            return (string)oldValue == newJson;
+            return oldJson == newJson;
         }
 
         var valueType = oldValue.GetType();
@@ -135,7 +130,8 @@ public class MongoTrackingObject
         if (valueType.IsValueType || valueType == typeof(string))
             return oldValue.Equals(newValue);
 
-        return ReferenceEquals(oldValue, newValue);
+        // Both are complex reference types — serialize and compare
+        return JsonSerializer.Serialize(oldValue) == JsonSerializer.Serialize(newValue);
     }
 
     private static Func<object, object> BuildCloner(Type collectionType)
