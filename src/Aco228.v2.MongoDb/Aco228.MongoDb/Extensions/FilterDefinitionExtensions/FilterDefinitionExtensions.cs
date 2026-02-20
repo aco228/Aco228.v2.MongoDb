@@ -23,7 +23,7 @@ public static class FilterDefinitionExtensions
     {
         var filter = Builders<TDocument>.Filter.Or(
             Builders<TDocument>.Filter.Exists(name, false),
-            Builders<TDocument>.Filter.Ne(name, BsonNull.Value)
+            Builders<TDocument>.Filter.Eq(name, BsonNull.Value)  // ✅ Fix: Ne → Eq
         );
         
         return filter;
@@ -51,8 +51,7 @@ public static class FilterDefinitionExtensions
         Expression<Func<TDocument, TKey>> selector, TKey val)
     {
         var nullProp = selector.GetName().PropIsNotNull<TDocument>();
-        filterBody.Add(Builders<TDocument>.Filter.Or(nullProp, Builders<TDocument>.Filter.Eq(selector, val)));
+        filterBody.Add(Builders<TDocument>.Filter.And(nullProp, Builders<TDocument>.Filter.Eq(selector, val)));  // ✅ Fix: Or → And
         return filterBody;
     }
-    
 }
