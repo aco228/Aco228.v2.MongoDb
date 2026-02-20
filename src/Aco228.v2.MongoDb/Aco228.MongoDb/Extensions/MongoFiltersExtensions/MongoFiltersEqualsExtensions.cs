@@ -141,11 +141,13 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
-    public static LoadSpecification<TDocument, TProjection> Exists<TDocument, TProjection>(
-        this LoadSpecification<TDocument, TProjection> spec, string fieldName)
+    public static LoadSpecification<TDocument, TProjection> Exists<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey?>> selector)
         where TDocument : MongoDocument
         where TProjection : class
     {
+        var fieldName = selector.GetName();
         spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Exists(fieldName));
         return spec;
     }
