@@ -33,6 +33,8 @@ public abstract class MongoDbContext : IMongoDbContext
                 settings.ConnectTimeout = TimeSpan.FromSeconds(10); // Adjust as needed
                 settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(5);
                 settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(10);
+                settings.HeartbeatInterval = TimeSpan.FromSeconds(10);
+                
 
                 settings = ConfigureClientSettings(settings);
                 _client = new MongoClient(settings);
