@@ -68,6 +68,7 @@ public class LoadSpecification<TDocument, TProjection>
     
     public LoadSpecification<TDocument, TProjection> FilterBy(List<FilterDefinition<TDocument>> filters)
     {
+        if (!filters.Any()) return this;
         FilterDefinitions.AddRange(filters);
         return this;
     }

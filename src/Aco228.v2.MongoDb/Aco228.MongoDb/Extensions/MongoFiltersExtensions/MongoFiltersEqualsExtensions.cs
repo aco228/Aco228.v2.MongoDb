@@ -11,10 +11,11 @@ public static class MongoFiltersEqualsExtensions
     public static LoadSpecification<TDocument, TProjection> Eq<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector, 
-        TKey val)
+        TKey? val)
         where TDocument : MongoDocument
         where TProjection : class
     {
+        if (val == null) return spec;
         spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Eq(selector, val));
         return spec;
     }
