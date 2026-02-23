@@ -13,7 +13,7 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         var isNew = document.CheckIfNewAndPrepareForInsert();
 
-        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)) && document.IgnoreTrackingObject == false)
         {
             repo.UpdateFields(document);
             return;
@@ -34,7 +34,7 @@ public static class MongoRepoInsertsExtensions
         repo.GuardConfiguration();
         var isNew = document.CheckIfNewAndPrepareForInsert();
         
-        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+        if (!isNew && typeof(MongoLite).IsAssignableFrom(typeof(TDocument)) && document.IgnoreTrackingObject == false)
         {
             return await repo.UpdateFieldsAsync(document);
         }
@@ -70,7 +70,7 @@ public static class MongoRepoInsertsExtensions
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
-                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)) &&  document.IgnoreTrackingObject == false)
                 {
                     updateFieldsOps.Add(document);
                     continue;
@@ -112,7 +112,7 @@ public static class MongoRepoInsertsExtensions
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
                     continue;
                 
-                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+                if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)) && document.IgnoreTrackingObject == false)
                 {
                     updateFieldsOps.Add(document);
                     continue;

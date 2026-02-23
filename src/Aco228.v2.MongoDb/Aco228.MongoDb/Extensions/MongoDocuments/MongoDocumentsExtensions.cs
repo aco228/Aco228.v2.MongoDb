@@ -22,6 +22,9 @@ public static class MongoDocumentsExtensions
     public static Task InsertOrUpdateAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
         => GetRepo<TDocument>().InsertOrUpdateAsync(mongoDocument);
     
+    public static Task InsertOrUpdateSingleAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
+        => GetRepo<TDocument>().InsertOrUpdateAsync(mongoDocument);
+    
     public static void InsertOrUpdate<TDocument>(this TDocument mongoDocument) where TDocument: MongoDocument
         => GetRepo<TDocument>().InsertOrUpdate(mongoDocument);
     

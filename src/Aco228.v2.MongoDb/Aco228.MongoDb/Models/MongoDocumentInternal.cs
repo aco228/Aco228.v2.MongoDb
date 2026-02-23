@@ -11,7 +11,8 @@ public class MongoDocumentInternal
     [BsonId] [JsonIgnore]
     [BsonRepresentation(BsonType.String)]
     public ObjectId Id { get; set; }
-    
+
+    [BsonIgnore] internal bool IgnoreTrackingObject = false;
     private MongoTrackingObject? _trackingObject;
 
     public bool HasTracking() => _trackingObject?.HasTracking() == true;
