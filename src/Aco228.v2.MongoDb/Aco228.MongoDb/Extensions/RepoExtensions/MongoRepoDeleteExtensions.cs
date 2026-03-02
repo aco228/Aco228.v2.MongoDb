@@ -45,7 +45,7 @@ public static class MongoRepoDeleteExtensions
     public static void DeleteMany<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
     {
-        var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
+        var mongoDocuments = documents.Where(x => x.Id != ObjectId.Empty).ToList();
         
         if (!mongoDocuments.Any()) return;
         repo.GuardConfiguration();
@@ -58,7 +58,7 @@ public static class MongoRepoDeleteExtensions
     public static Task DeleteManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
         where TDocument : MongoDocument
     {
-        var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
+        var mongoDocuments = documents.Where(x => x.Id != ObjectId.Empty).ToList();
         
         if (!mongoDocuments.Any()) return Task.FromResult(true);
         repo.GuardConfiguration();
