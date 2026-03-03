@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using Aco228.MongoDb.Extensions.FilterDefinitionExtensions;
 using Aco228.MongoDb.Models;
 using MongoDB.Bson;
@@ -17,6 +18,20 @@ public static class MongoFiltersEqualsExtensions
     {
         if (val == null) return spec;
         spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Eq(selector, val));
+        return spec;
+    }
+    
+    public static LoadSpecification<TDocument, TProjection> EqString<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector, 
+        TKey? val)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        if (val == null) return spec;
+        var field = new ExpressionFieldDefinition<TDocument>(selector);
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Regex(field, 
+            new BsonRegularExpression($"^{Regex.Escape(val.ToString()!)}$", "i")));
         return spec;
     }
     

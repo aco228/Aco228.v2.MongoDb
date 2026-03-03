@@ -27,7 +27,7 @@ internal static class SpecificationLoadProjectionExtensions
         
         TDocument document = input as TDocument;
         if(document == null)
-            throw new InvalidOperationException($"Project document of LoadSpecification is null");
+            return default;
         
         return spec.ProjectMapper.CreateObjectFrom(document, spec.TrackValues);
     }
