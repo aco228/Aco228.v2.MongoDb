@@ -1,4 +1,6 @@
 ﻿using System.Linq.Expressions;
+using Aco228.Common.Extensions;
+using Aco228.Common.Infrastructure;
 using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
@@ -158,6 +160,18 @@ public static class MongoRepoLoadBySpecificationExtensions
         if (filter != null) spec.FilterBy(filter);
         using var cursor = await spec.GetCursorAsync();
         return (await cursor.ToListAsync()).ProjectList(spec);
+    }
+    
+    public static async Task<ManagedList<TProjection>> ToManagedListAsync<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        if (filter != null) spec.FilterBy(filter);
+        using var cursor = await spec.GetCursorAsync();
+        var list = (await cursor.ToListAsync()).ProjectList(spec);
+        return list.ToManagedList();
     }
 
     public static async IAsyncEnumerable<TProjection> LoadInBatchesAsync<TDocument, TProjection>(
