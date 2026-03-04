@@ -18,4 +18,13 @@ public class IdDocument
             Name = document.Name,
             Description = document.Description,
         };
+
+    public IdDocument Copy()
+        => new()
+        {
+            Description = Description,
+            Id = Id,
+            Name = Name,
+            SlugId = SlugId,
+        };
 }
