@@ -81,6 +81,9 @@ public class LoadSpecification<TDocument, TProjection>
     
     public LoadSpecification<TDocument, TProjection> Full()
     {
+        if (typeof(MongoLite).IsAssignableFrom(typeof(TDocument)))
+            TrackValues = true;
+        
         _loadFull = true;
         return this;
     }
