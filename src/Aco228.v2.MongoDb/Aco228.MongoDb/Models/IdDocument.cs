@@ -10,14 +10,18 @@ public class IdDocument
     [MongoIndex] public string Name { get; set; } = "";
     public string? Description { get; set; } = "";
 
-    public static IdDocument CreateFrom<T>(T document) where T : SlugDocument
-        => new()
+    public static IdDocument? CreateFrom<T>(T? document) where T : SlugDocument
+    {
+        if(document == null) return null;
+        return new()
         {
-            SlugId = document.SlugId,
+            Description = document.Description,
             Id = document.Id,
             Name = document.Name,
-            Description = document.Description,
+            SlugId = document.SlugId,
         };
+        
+    }
 
     public IdDocument Copy()
         => new()
