@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Models;
+﻿using Aco228.MongoDb.Constants;
+using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -18,7 +19,10 @@ public static class MongoRepoDeleteExtensions
         
         repo.GuardConfiguration();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
-        repo.GetCollection().FindOneAndDelete(filter);
+        PollyConfiguration.Sync.Execute(() =>
+        {
+            repo.GetCollection().FindOneAndDelete(filter);
+        });
     }
     
     public static Task DeleteByIdAsync<TDocument>(this IMongoRepo<TDocument> repo, ObjectId objectId)
@@ -28,7 +32,11 @@ public static class MongoRepoDeleteExtensions
         
         repo.GuardConfiguration();
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, objectId);
-        return repo.GetCollection().FindOneAndDeleteAsync(filter);
+
+        return PollyConfiguration.Async.ExecuteAsync(async () =>
+        {
+            await repo.GetCollection().FindOneAndDeleteAsync(filter);
+        });
     }
     
     public static void DeleteById<TDocument>(this IMongoRepo<TDocument> repo, string documentId) where TDocument : MongoDocument => repo.DeleteById( new ObjectId(documentId));
@@ -51,7 +59,10 @@ public static class MongoRepoDeleteExtensions
         repo.GuardConfiguration();
         var ids = mongoDocuments.Where(x => x.Id != ObjectId.Empty).Select(d => d.Id).ToList();
         var filter = Builders<TDocument>.Filter.In(d => d.Id, ids);
-        repo.GetCollection().DeleteMany(filter);
+        PollyConfiguration.Sync.Execute(() =>
+        {
+            repo.GetCollection().DeleteMany(filter);
+        });
     }
     
 
@@ -64,7 +75,10 @@ public static class MongoRepoDeleteExtensions
         repo.GuardConfiguration();
         var ids = mongoDocuments.Where(x => x.Id != BsonObjectId.Empty).Select(d => d.Id).ToList();
         var filter = Builders<TDocument>.Filter.In(d => d.Id, ids);
-        return repo.GetCollection().DeleteManyAsync(filter);
+        return PollyConfiguration.Async.ExecuteAsync(async () =>
+        {
+            await repo.GetCollection().DeleteManyAsync(filter);
+        });
     }
     
     

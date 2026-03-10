@@ -29,10 +29,10 @@ public abstract class MongoDbContext : IMongoDbContext
                 settings.RetryWrites = true;
                 settings.RetryReads = true;
                 settings.ServerApi = new ServerApi(ServerApiVersion.V1);
-                settings.SocketTimeout = TimeSpan.FromMinutes(5); // Adjust as needed
+                settings.SocketTimeout = TimeSpan.FromSeconds(60); // Adjust as needed
                 settings.ConnectTimeout = TimeSpan.FromSeconds(10); // Adjust as needed
-                settings.MaxConnectionIdleTime = TimeSpan.FromMinutes(5);
-                settings.MaxConnectionLifeTime = TimeSpan.FromMinutes(10);
+                settings.MaxConnectionIdleTime = TimeSpan.FromSeconds(60);
+                settings.MaxConnectionLifeTime = TimeSpan.FromSeconds(60);
                 settings.HeartbeatInterval = TimeSpan.FromSeconds(10);
                 
 

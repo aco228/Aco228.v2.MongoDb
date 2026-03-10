@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Extensions.MongoDocuments;
+﻿using Aco228.MongoDb.Constants;
+using Aco228.MongoDb.Extensions.MongoDocuments;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
 using MongoDB.Driver;
@@ -46,7 +47,11 @@ public static class MongoRepoInsertsExtensions
         
         MongoDocumentExtensions.SetDocumentDefaultValues(document);
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
-        await repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
+        
+        await PollyConfiguration.Async.ExecuteAsync(async () =>
+        {
+            await repo.GetCollection().ReplaceOneAsync(filter, document, new ReplaceOptions { IsUpsert = true });
+        });
         return document;
     }
 
@@ -89,7 +94,10 @@ public static class MongoRepoInsertsExtensions
         if(!operations.Any())
             return;
         
-        var result = repo.GetCollection().BulkWrite(operations, new() { IsOrdered = false });
+        PollyConfiguration.Sync.Execute(() =>
+        {
+            var result = repo.GetCollection().BulkWrite(operations, new() { IsOrdered = false });
+        });
     }
 
     public static async Task InsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
@@ -130,7 +138,10 @@ public static class MongoRepoInsertsExtensions
 
         if (!operations.Any())
             return;
-        
-        await repo.GetCollection()!.BulkWriteAsync(operations, new() { IsOrdered = false });
+
+        await PollyConfiguration.Async.ExecuteAsync(async () =>
+        {
+            await repo.GetCollection()!.BulkWriteAsync(operations, new() { IsOrdered = false });
+        });
     }
 }

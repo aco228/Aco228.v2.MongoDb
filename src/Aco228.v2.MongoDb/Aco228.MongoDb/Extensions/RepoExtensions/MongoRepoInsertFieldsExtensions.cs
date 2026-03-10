@@ -1,4 +1,5 @@
-﻿using Aco228.MongoDb.Models;
+﻿using Aco228.MongoDb.Constants;
+using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
 using MongoDB.Driver;
 
@@ -36,9 +37,12 @@ public static class MongoRepoInsertFieldsExtensions
         var updater = Builders<TDocument>.Update;
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue)).ToList();
         updateList.Add(updater.Set(x => x.UpdatedUtc, DT.GetUnix()));
-        
-        repo.GetCollection().UpdateOne(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
-        trackObject.ResetTracking();
+
+        PollyConfiguration.Sync.Execute(() =>
+        {
+            repo.GetCollection().UpdateOne(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
+            trackObject.ResetTracking();
+        });
     }
     
 
@@ -72,9 +76,12 @@ public static class MongoRepoInsertFieldsExtensions
         var updater = Builders<TDocument>.Update;
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue)).ToList();
         updateList.Add(updater.Set(x => x.UpdatedUtc, DT.GetUnix()));
-        
-        await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
-        trackObject.ResetTracking();
+
+        await PollyConfiguration.Async.ExecuteAsync(async () =>
+        {
+            await repo.GetCollection().UpdateOneAsync(Builders<TDocument>.Filter.Eq(x => x.Id, document.Id), updater.Combine(updateList));
+            trackObject.ResetTracking();
+        });
         return document;
     }
     
@@ -113,8 +120,11 @@ public static class MongoRepoInsertFieldsExtensions
         
         if(inserts.Any())
             await repo.InsertOrUpdateManyAsync(inserts);
-        
-        if(operations.Any())
-            await repo.GetCollection().BulkWriteAsync(operations, new() { IsOrdered = false });
+
+        if (operations.Any())
+            await PollyConfiguration.Async.ExecuteAsync(async () =>
+            {
+                await repo.GetCollection().BulkWriteAsync(operations, new() { IsOrdered = false });
+            });
     }
 }
