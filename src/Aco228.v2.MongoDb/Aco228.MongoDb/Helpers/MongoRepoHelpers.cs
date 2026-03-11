@@ -84,7 +84,16 @@ public static class MongoRepoHelpers
         {
             var dbContext = pr.GetService<TDbContext>()!;
             foreach (var documentType in documentTypes)
-                await MongoIndexesExtensions.ConfigureIndexes(dbContext, documentType);
+            {
+                try
+                {
+                    await MongoIndexesExtensions.ConfigureIndexes(dbContext, documentType);
+                }
+                catch
+                {
+                    Console.WriteLine($"Error configuring indexes for: {documentType.FullName}");
+                }
+            }
         });
     }
     
