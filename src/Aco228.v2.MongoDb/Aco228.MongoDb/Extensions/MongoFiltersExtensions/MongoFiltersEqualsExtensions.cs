@@ -42,10 +42,22 @@ public static class MongoFiltersEqualsExtensions
         where TDocument : MongoDocument
         where TProjection : class
     {
-        if (!val.Any())
+        var list = val.ToList();
+        if (!list.Any())
             return spec;
         
-        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, val));
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.In(selector, list));
+        return spec;
+    }
+    
+    public static LoadSpecification<TDocument, TProjection> In<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, IEnumerable<TKey>>> selector,
+        TKey val)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.AnyEq(selector, val));
         return spec;
     }
     
