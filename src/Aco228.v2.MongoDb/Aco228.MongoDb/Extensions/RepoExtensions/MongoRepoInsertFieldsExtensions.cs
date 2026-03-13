@@ -31,8 +31,8 @@ public static class MongoRepoInsertFieldsExtensions
         if (!changedFields.Any())
             return;
 
-        foreach (var field in changedFields)
-            Console.WriteLine($"Changing {typeof(TDocument).Name}.{field.PropertyName} from {field.OldValue} to {field.NewValue}");
+        // foreach (var field in changedFields)
+        //     Console.WriteLine($"Changing {typeof(TDocument).Name}.{field.PropertyName} from {field.OldValue} to {field.NewValue}");
 
         var updater = Builders<TDocument>.Update;
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue)).ToList();
@@ -70,8 +70,8 @@ public static class MongoRepoInsertFieldsExtensions
         if (!changedFields.Any())
             return document;
 
-        foreach (var field in changedFields)
-            Console.WriteLine($"Changing {typeof(TDocument).Name}.{field.PropertyName} from {field.OldValue} to {field.NewValue}");
+        // foreach (var field in changedFields)
+        //     Console.WriteLine($"Changing {typeof(TDocument).Name}.{field.PropertyName} from {field.OldValue} to {field.NewValue}");
 
         var updater = Builders<TDocument>.Update;
         var updateList = changedFields.Select(x => updater.Set(x.PropertyName, x.NewValue)).ToList();
