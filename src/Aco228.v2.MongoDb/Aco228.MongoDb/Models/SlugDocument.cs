@@ -7,5 +7,7 @@ public abstract class SlugDocument : MongoLite
     [MongoIndex] public string SlugId { get; set; }
     [MongoIndex] public string Name { get; set; }
     [MongoIndex] public string? Description { get; set; }
-    public string? ReportSlackChannelId { get; set; }
+    public string? SlackChannelReportArticle { get; set; }
+    public string? SlackChannelReportResearchTitle { get; set; }
+    public string? SlackChannelReportGenerateAds { get; set; }
 }
