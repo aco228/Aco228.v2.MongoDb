@@ -59,7 +59,7 @@ internal static class SpecificationLoadProjectionExtensions
     public static List<TProjection> ProjectList<TDocument, TProjection>(this IEnumerable<object> input, LoadSpecification<TDocument, TProjection> spec)
         where TDocument : MongoDocument
         where TProjection : class
-    {   
+    {
         if(typeof(TProjection) == typeof(TDocument))
         {   
             if (spec.TrackValues)

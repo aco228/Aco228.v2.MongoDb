@@ -16,6 +16,28 @@ public static class MongoRepoHelpers
     {
         return ServiceProviderHelper.GetService<IMongoRepo<TDocument>>();
     }
+
+    public static List<MongoRepoServiceDefinition> GetAllRepoTypes()
+    {
+        var services = ServiceProviderHelper.GetRegisteredServices().ToList();
+        var mongoRepoType = typeof(IMongoRepo<>);
+        var result = new List<MongoRepoServiceDefinition>();
+        foreach (var service in services)
+        {
+            var type = service.ServiceType;
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == mongoRepoType)
+            {
+                var genericType = type.GenericTypeArguments;
+                result.Add(new()
+                {
+                    Service = type,
+                    DocumentType = genericType.FirstOrDefault(),
+                });
+            }
+        }
+        
+        return result;
+    }
     
     public static IMongoRepo<TDocument> CreateRepo<TDocument, TDbContext>()
         where TDbContext : IMongoDbContext

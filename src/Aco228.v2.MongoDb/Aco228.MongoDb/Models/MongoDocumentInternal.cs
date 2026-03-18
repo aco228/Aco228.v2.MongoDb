@@ -14,7 +14,7 @@ public class MongoDocumentInternal
 
     [BsonIgnore] internal bool IgnoreTrackingObject = false;
     private MongoTrackingObject? _trackingObject;
-
+    
     public bool HasTracking() => _trackingObject?.HasTracking() == true;
     public MongoTrackingObject? GetTrackingObject() => _trackingObject;
     

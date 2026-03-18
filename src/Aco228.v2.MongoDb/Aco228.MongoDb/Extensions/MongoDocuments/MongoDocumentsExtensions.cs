@@ -11,7 +11,7 @@ public static class MongoDocumentsExtensions
     internal static IMongoRepo<TDocument> GetRepo<TDocument>()
         where TDocument : MongoDocument
         => ServiceProviderHelper.GetService<IMongoRepo<TDocument>>()!;
-
+    
     public static bool ShouldUpdateIfThereIsTrackingOrChanges(this MongoDocumentInternal mongoDocument)
     {
         var obj = mongoDocument.GetTrackingObject();
@@ -21,6 +21,9 @@ public static class MongoDocumentsExtensions
     
     public static Task InsertOrUpdateAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
         => GetRepo<TDocument>().InsertOrUpdateAsync(mongoDocument);
+
+    public static Task DeleteAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
+        => GetRepo<TDocument>().DeleteByIdAsync(mongoDocument.Id);
     
     public static Task InsertOrUpdateSingleAsync<TDocument>(this TDocument mongoDocument) where TDocument : MongoDocument
         => GetRepo<TDocument>().InsertOrUpdateAsync(mongoDocument);

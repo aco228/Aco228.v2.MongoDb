@@ -19,6 +19,12 @@ public static class MongoDocumentExtensions
     
     internal static void SetDocumentDefaultValues(MongoDocument document)
     {
+        if (document.CreatedUtc == 0)
+            document.CreatedUtc = DT.GetUnix();
+        
+        if (document.UpdatedUtc == 0)
+            document.UpdatedUtc = DT.GetUnix();
+        
         if (document.Id == ObjectId.Empty)
         {
             document.Id = ObjectId.GenerateNewId();
