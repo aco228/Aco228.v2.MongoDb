@@ -6,4 +6,7 @@ public static class DT
 {
     public static long GetUnix()
         => DateTime.UtcNow.ToUnixTimestampMilliseconds();
+    
+    public static long ToDT(this DateTime dt) 
+        => dt.ToUnixTimestampMilliseconds();
 }
