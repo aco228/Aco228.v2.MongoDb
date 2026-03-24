@@ -100,8 +100,27 @@ public static class MongoRepoInsertsExtensions
         });
     }
 
-    public static async Task InsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
-        where TDocument : MongoDocument
+    public static async Task InsertOrUpdateManyInBatchesAsync<TDocument>(
+        this IMongoRepo<TDocument> repo,
+        IEnumerable<TDocument> documents,
+        int perBatch = 50) where TDocument : MongoDocument
+    {
+        var current = new List<TDocument>();
+        foreach (var document in documents)
+        {
+            current.Add(document);
+            if (current.Count >= perBatch)
+            {
+                await repo.InsertOrUpdateManyAsync(current);
+                current.Clear();
+            }
+        }
+        
+        if (current.Any())
+            await repo.InsertOrUpdateManyAsync(current);
+    }
+
+    public static async Task InsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents) where TDocument : MongoDocument
     {
         repo.GuardConfiguration();
         var mongoDocuments = documents as TDocument[] ?? documents.ToArray();
