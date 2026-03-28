@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Aco228.MongoDb.Helpers;
 using MongoDB.Bson;
 
@@ -100,8 +101,11 @@ public class MongoTrackingObject
         if (valueType.IsValueType || valueType == typeof(string) || valueType == typeof(Guid) || valueType == typeof(ObjectId))
             return value;
 
-        // Serialize everything else (collections and complex objects) as JSON
-        return JsonSerializer.Serialize(value);
+        var options = new JsonSerializerOptions
+        {
+            NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+        };
+        return JsonSerializer.Serialize(value, options);
     }
 
     private static bool AreValuesEqual(object? oldValue, object? newValue)
@@ -115,7 +119,11 @@ public class MongoTrackingObject
         // oldValue was stored as JSON string for complex objects
         if (oldValue is string oldJson && newValue is not string)
         {
-            var newJson = JsonSerializer.Serialize(newValue);
+            var options = new JsonSerializerOptions
+            {
+                NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
+            };
+            var newJson = JsonSerializer.Serialize(newValue, options);
             return oldJson == newJson;
         }
 
