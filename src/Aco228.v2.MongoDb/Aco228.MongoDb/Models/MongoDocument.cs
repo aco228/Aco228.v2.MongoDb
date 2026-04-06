@@ -9,11 +9,13 @@ namespace Aco228.MongoDb.Models;
 [BsonIgnoreExtraElements]
 public abstract class MongoDocument : MongoDocumentInternal
 {
-    [MongoIndex] [JsonIgnore] [Newtonsoft.Json.JsonIgnore] 
-    public long CreatedUtc { get; set; }
+    [MongoIndex]
+    [JsonIgnore]
+    [Newtonsoft.Json.JsonIgnore]
+    public long CreatedUtc { get; set; } = DT.GetUnix();
     
     [MongoIndex] [JsonIgnore] [Newtonsoft.Json.JsonIgnore] 
-    public long UpdatedUtc { get; set; }
+    public long UpdatedUtc { get; set; } = DT.GetUnix();
 
     internal virtual bool CanBeDeleted { get; } = true;
 }
