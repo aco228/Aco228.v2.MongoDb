@@ -21,6 +21,18 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
+    public static LoadSpecification<TDocument, TProjection> Ne<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector, 
+        TKey? val)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        if (val == null) return spec;
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Ne(selector, val));
+        return spec;
+    }
+    
     public static LoadSpecification<TDocument, TProjection> EqString<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector, 
