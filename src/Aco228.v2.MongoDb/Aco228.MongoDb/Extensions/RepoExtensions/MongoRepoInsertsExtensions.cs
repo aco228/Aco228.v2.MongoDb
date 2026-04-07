@@ -69,7 +69,10 @@ public static class MongoRepoInsertsExtensions
         foreach (var document in mongoDocuments)
         {
             if (document.CheckIfNewAndPrepareForInsert())
+            {
+                MongoDocumentExtensions.SetDocumentDefaultValues(document);
                 operations.Add(new InsertOneModel<TDocument>(document));
+            }
             else
             {
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
@@ -133,7 +136,10 @@ public static class MongoRepoInsertsExtensions
         foreach (var document in mongoDocuments)
         {
             if (document.CheckIfNewAndPrepareForInsert())
+            {
+                MongoDocumentExtensions.SetDocumentDefaultValues(document);
                 operations.Add(new InsertOneModel<TDocument>(document));
+            }
             else
             {
                 if (!document.ShouldUpdateIfThereIsTrackingOrChanges())
