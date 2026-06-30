@@ -62,6 +62,21 @@ public static class MongoFiltersEqualsExtensions
         return spec;
     }
     
+    public static LoadSpecification<TDocument, TProjection> NotIn<TDocument, TProjection, TKey>(
+        this LoadSpecification<TDocument, TProjection> spec, 
+        Expression<Func<TDocument, TKey>> selector, 
+        IEnumerable<TKey> val)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var list = val.ToList();
+        if (!list.Any())
+            return spec;
+
+        spec.FilterDefinitions.Add(Builders<TDocument>.Filter.Nin(selector, list));
+        return spec;
+    }
+    
     public static LoadSpecification<TDocument, TProjection> In<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, IEnumerable<TKey>>> selector,
