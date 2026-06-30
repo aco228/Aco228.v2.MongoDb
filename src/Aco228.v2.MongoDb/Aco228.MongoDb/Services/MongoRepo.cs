@@ -26,7 +26,14 @@ public class MongoRepo<TDocument> : IMongoRepo<TDocument>
         if (_collection == null) throw new InvalidOperationException("Collection is null");
         if (_database == null) throw new InvalidOperationException("Database is null");
     }
-    
-    
-    
+
+    public Task<bool> AnyAsync() => _collection.Find(FilterDefinition<TDocument>.Empty).Limit(1).AnyAsync();
+    public bool Any() => _collection.Find(FilterDefinition<TDocument>.Empty).Limit(1).Any();
+
+    public Task<long> EstimateCountAsync() => _collection?.EstimatedDocumentCountAsync();
+    public long EstimateCount() => _collection?.EstimatedDocumentCount() ?? 0;
+
+
+
+
 }

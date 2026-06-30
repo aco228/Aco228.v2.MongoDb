@@ -25,4 +25,8 @@ public interface IMongoRepo<TDocument>
     public Task<TDocument?> FirstOrDefault(Expression<Func<TDocument, bool>>? filter) => AsQueryable().FirstOrDefaultAsync(filter);
 
     public LoadSpecification<TDocument, TProjection> TrackProject<TProjection>() where TProjection : MongoProjection<TDocument> => new(this, true);
+    Task<bool> AnyAsync();
+    bool Any();
+    Task<long> EstimateCountAsync();
+    long EstimateCount();
 }
