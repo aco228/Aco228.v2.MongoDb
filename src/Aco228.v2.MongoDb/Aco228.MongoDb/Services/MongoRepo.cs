@@ -7,14 +7,16 @@ namespace Aco228.MongoDb.Services;
 public class MongoRepo<TDocument> : IMongoRepo<TDocument>
     where TDocument : MongoDocument
 {
+    public string CollectionName { get; private set; }
     private bool _isConfigured = false;
     private IMongoCollection<TDocument>? _collection;
     private IMongoDatabase? _database;
 
     public void Configure(BsonCollectionAttribute configurationAttribute, IMongoDbContext context)
     {
+        CollectionName = configurationAttribute.CollectionName;
         _database = context.GetDatabase();
-        _collection = _database.GetCollection<TDocument>(configurationAttribute.CollectionName);
+        _collection = _database.GetCollection<TDocument>(CollectionName);
         _isConfigured = true;
     }
 
@@ -32,8 +34,9 @@ public class MongoRepo<TDocument> : IMongoRepo<TDocument>
 
     public Task<long> EstimateCountAsync() => _collection?.EstimatedDocumentCountAsync();
     public long EstimateCount() => _collection?.EstimatedDocumentCount() ?? 0;
-
-
-
-
+    public async Task DropTable(bool areYouSure)
+    {
+        if (areYouSure == false) return;
+        await _database!.DropCollectionAsync(CollectionName);
+    }
 }

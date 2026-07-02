@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Models.Attributes;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -10,6 +9,7 @@ namespace Aco228.MongoDb.Services;
 public interface IMongoRepo<TDocument>
     where TDocument : MongoDocument
 {
+    string CollectionName { get; }
     internal void Configure(BsonCollectionAttribute configuration, IMongoDbContext context);
     internal void GuardConfiguration();
     
@@ -29,4 +29,5 @@ public interface IMongoRepo<TDocument>
     bool Any();
     Task<long> EstimateCountAsync();
     long EstimateCount();
+    Task DropTable(bool areYouSure);
 }
