@@ -8,7 +8,7 @@ using MongoDB.Driver;
 namespace Aco228.MongoDb.Extensions.MongoFiltersExtensions;
 
 public static class MongoFiltersEqualsExtensions
-{
+{   
     public static LoadSpecification<TDocument, TProjection> Eq<TDocument, TProjection, TKey>(
         this LoadSpecification<TDocument, TProjection> spec, 
         Expression<Func<TDocument, TKey>> selector, 
