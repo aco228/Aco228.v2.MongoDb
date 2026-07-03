@@ -15,7 +15,7 @@ public static class MongoDocumentsExtensions
     public static bool ShouldUpdateIfThereIsTrackingOrChanges(this MongoDocumentInternal mongoDocument)
     {
         var obj = mongoDocument.GetTrackingObject();
-        if(obj == null) return true;
+        if(obj == null || mongoDocument.IgnoreTrackingObject) return true;
         return obj.AnyChanges();
     }
     

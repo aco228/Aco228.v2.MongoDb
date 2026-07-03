@@ -23,4 +23,9 @@ public class MongoDocumentInternal
         _trackingObject = new MongoTrackingObject(this, GetType()).StartTracking();
         return _trackingObject;
     }
+
+    public void SetIgnoreTrackingObject(bool value = true)
+    {
+        IgnoreTrackingObject = value;
+    }
 }
