@@ -1,14 +1,17 @@
 ﻿using Aco228.MongoDb.Models.Attributes;
+using MessagePack;
 using MongoDB.Bson;
 
 namespace Aco228.MongoDb.Models;
 
+[Serializable]
+[MessagePackObject]
 public class IdDocument
 {
-    [MongoIndex] public string SlugId { get; set; }
-    [MongoIndex] public ObjectId Id { get; set; }
-    [MongoIndex] public string Name { get; set; } = "";
-    public string? Description { get; set; } = "";
+    [Key(0)] [MongoIndex] public string SlugId { get; set; }
+    [Key(1)] [MongoIndex] public ObjectId Id { get; set; }
+    [Key(2)] [MongoIndex] public string Name { get; set; } = "";
+    [Key(3)] public string? Description { get; set; } = "";
 
     public static IdDocument? CreateFrom<T>(T? document) where T : SlugDocument
     {
