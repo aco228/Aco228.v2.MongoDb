@@ -1,4 +1,6 @@
-﻿using MongoDB.Bson.Serialization.Conventions;
+﻿using Aco228.Common;
+using Aco228.Common.Services;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 
 namespace Aco228.MongoDb.Services;
@@ -15,6 +17,8 @@ public abstract class MongoDbContext : IMongoDbContext
     private MongoClient? _client;
     private IMongoDatabase? _database;
     public abstract string DatabaseName { get; }
+    protected virtual string ConnectionStringSecretName { get; } = "DATABASE_CONNECTION_STRING";
+    private static string? _sharedConnectionString;
     
     public IMongoDatabase GetDatabase()
     {
@@ -55,8 +59,38 @@ public abstract class MongoDbContext : IMongoDbContext
     protected abstract string GetConnectionString();
     protected virtual MongoClientSettings ConfigureClientSettings(MongoClientSettings settings) => settings;
 
-    protected string GetConnectionStringFromEnv(string envName)
-        => Environment.GetEnvironmentVariable(envName) ?? throw new Exception($"Environment variable {envName} is not set");
+    protected string GetConnectionStringFromEnv(string? localEnvName = null)
+    {
+        if (!string.IsNullOrEmpty(localEnvName))
+        {
+            var localConnectionString = Environment.GetEnvironmentVariable(localEnvName);
+            if (localConnectionString != null)
+                return localConnectionString;
+        }
+
+        var localOverride = Environment.GetEnvironmentVariable($"LOCAL_{ConnectionStringSecretName}");
+        if (!string.IsNullOrEmpty(localOverride))
+        {
+            _sharedConnectionString = localOverride;
+            return _sharedConnectionString;
+        }
+        
+
+        var mainConnectionString = GetSharedConnectionString();
+        return mainConnectionString ?? throw new Exception($"Environment variable {ConnectionStringSecretName} is not set");
+    }
+
+    private string GetSharedConnectionString()
+    {
+        if (!string.IsNullOrEmpty(_sharedConnectionString))
+            return _sharedConnectionString;
+        
+        var mainConnectionString = ServiceProviderHelper.GetService<ISecretProvider>()!.Get(ConnectionStringSecretName);
+        if(!string.IsNullOrEmpty(mainConnectionString))
+            _sharedConnectionString = mainConnectionString;
+
+        return mainConnectionString;
+    }
 
     public void Dispose()
     {
