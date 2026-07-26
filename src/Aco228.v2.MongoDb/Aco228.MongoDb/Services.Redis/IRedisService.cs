@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Aco228.Common;
+using Aco228.Common.Services;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 
 namespace Aco228.MongoDb.Services.Redis;
@@ -36,9 +38,18 @@ public abstract class RedisService : IRedisService, IAsyncDisposable
         return $"{NamePrefix}-{key}";
     }
 
-    public RedisService(string envVariableName)
+    public RedisService(string? envVariableName = null)
     {
+        if (string.IsNullOrEmpty(envVariableName))
+            envVariableName = "REDIS_CONNECTION_STRING";
+        
         var connectionString = Environment.GetEnvironmentVariable(envVariableName);
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            var secretProvider = ServiceProviderHelper.GetService<ISecretProvider>()!;
+            connectionString = secretProvider.Get(envVariableName);
+        }
+        
         if (string.IsNullOrEmpty(connectionString))
             throw new ArgumentException("Please provide connection string for Redis service");
         
