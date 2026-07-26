@@ -20,7 +20,7 @@ public interface IRedisService
     Task<bool> ExistsAsync(string key);
 
     Task<bool> TryAcquireLockAsync(string resource, TimeSpan expiry);
-    Task<bool> ReleaseLockAsync(string resource, string token);
+    Task<bool> DeleteLockAsync(string resource);
 }
 
 public abstract class RedisService : IRedisService, IAsyncDisposable
@@ -118,22 +118,12 @@ public abstract class RedisService : IRedisService, IAsyncDisposable
         var acquired = await _db.StringSetAsync(GetKeyName(key), token, expiry, When.NotExists);
         return acquired;
     }
- 
-    /// <summary>
-    /// Releases the lock only if the caller still holds it (token matches) —
-    /// prevents accidentally releasing a lock someone else acquired after yours expired.
-    /// </summary>
-    public async Task<bool> ReleaseLockAsync(string resource, string token)
+
+    public async Task<bool> DeleteLockAsync(string resource)
     {
-        const string script = @"
-            if redis.call('get', KEYS[1]) == ARGV[1] then
-                return redis.call('del', KEYS[1])
-            else
-                return 0
-            end";
         var key = $"lock:{resource}";
-        var result = await _db.ScriptEvaluateAsync(script, new RedisKey[] { GetKeyName(key) }, new RedisValue[] { token });
-        return (long)result == 1;
+        var res = await _db.KeyDeleteAsync(GetKeyName(key));
+        return res;
     }
 
     public async ValueTask DisposeAsync()
