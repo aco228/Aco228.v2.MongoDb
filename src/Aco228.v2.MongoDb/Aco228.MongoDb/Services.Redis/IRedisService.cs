@@ -7,6 +7,7 @@ namespace Aco228.MongoDb.Services.Redis;
 
 public interface IRedisService
 {
+    ConnectionMultiplexer Multiplexer { get; }
     Task SetStringAsync(string key, string value, TimeSpan? expiry = null);
     Task<string?> GetStringAsync(string key);
     
@@ -30,6 +31,8 @@ public abstract class RedisService : IRedisService, IAsyncDisposable
     private readonly ConnectionMultiplexer _redis;
     private readonly IDatabase _db;
     protected virtual string NamePrefix { get; } = "";
+
+    public ConnectionMultiplexer Multiplexer => _redis;
 
     private string GetKeyName(string key)
     {
