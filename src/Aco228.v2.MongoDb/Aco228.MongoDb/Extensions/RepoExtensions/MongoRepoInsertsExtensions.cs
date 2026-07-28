@@ -28,7 +28,22 @@ public static class MongoRepoInsertsExtensions
         var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, document.Id);
         repo.GetCollection()!.ReplaceOne(filter, document, new ReplaceOptions { IsUpsert = true });
     }
-    
+
+
+    public static async Task<bool> TryInsertOrUpdateAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
+        where TDocument : MongoDocument
+    {
+        try
+        {
+            await InsertOrUpdateAsync(repo, document);
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
     public static async Task<TDocument> InsertOrUpdateAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
         where TDocument : MongoDocument
     {
