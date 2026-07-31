@@ -9,6 +9,7 @@ public interface IRedisService
 {
     ConnectionMultiplexer Multiplexer { get; }
     Task SetStringAsync(string key, string value, TimeSpan? expiry = null);
+    Task<bool> TrySetStringAsync(string key, string value, TimeSpan? expiry = null);
     Task<string?> GetStringAsync(string key);
     
     Task SetIntAsync(string key, int value, TimeSpan? expiry = null);
@@ -66,6 +67,16 @@ public abstract class RedisService : IRedisService, IAsyncDisposable
             await _db.StringSetAsync(GetKeyName(key), value, expiry.Value); // TimeSpan, not TimeSpan?
         else
             await _db.StringSetAsync(GetKeyName(key), value);
+    }
+
+    public async Task<bool> TrySetStringAsync(string key, string value, TimeSpan? expiry = null)
+    {
+        bool isValid = false;
+        if (expiry.HasValue)
+            isValid = await _db.StringSetAsync(GetKeyName(key), value, expiry.Value, When.NotExists); // TimeSpan, not TimeSpan?
+        else
+            isValid = await _db.StringSetAsync(GetKeyName(key), value, null, When.NotExists);
+        return isValid;
     }
 
     public async Task<string?> GetStringAsync(string key)
