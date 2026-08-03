@@ -4,7 +4,7 @@ using Aco228.MongoDb.Models;
 
 namespace Aco228.MongoDb.Services;
 
-public interface IMongoTransaction<T>
+public interface IMongoTransaction<T> : IAsyncDisposable
     where T : MongoDocument
 
 {
@@ -33,6 +33,7 @@ public class MongoTransaction<T> : IMongoTransaction<T>
     public IMongoRepo<T> Repo { get; private set; }
     private int CurrentCount => _insertRequests.Count + _deleteRequests.Count;
     private int _limit = 15;
+    private SemaphoreSlim _semaphore = new(1, 1);
 
     public MongoTransaction(IMongoRepo<T> repo)
     {
@@ -47,50 +48,74 @@ public class MongoTransaction<T> : IMongoTransaction<T>
 
     public void InsertOrUpdate(T document)
     {
+        _semaphore.Wait();
         _insertRequests.Add(document);
+        _semaphore.Release();
+        
         TryExecute();
     }
 
     public void InsertOrUpdateMultiple(IEnumerable<T> documents)
     {
+        _semaphore.Wait();
         _insertRequests.AddRange(documents);
+        _semaphore.Release();
+        
         TryExecute();
     }
 
-    public Task InsertOrUpdateAsync(T document)
+    public async Task InsertOrUpdateAsync(T document)
     {
+        await _semaphore.WaitAsync();
         _insertRequests.Add(document);
-        return TryExecuteAsync();
+        _semaphore.Release();
+        
+        await TryExecuteAsync();
     }
 
-    public Task InsertOrUpdateMultipleAsync(IEnumerable<T> documents)
+    public async Task InsertOrUpdateMultipleAsync(IEnumerable<T> documents)
     {
+        await _semaphore.WaitAsync();
         _insertRequests.AddRange(documents);
-        return TryExecuteAsync();
+        _semaphore.Release();
+        
+        await TryExecuteAsync();
     }
 
     public void Delete(T document)
     {
+        _semaphore.Wait();
         _deleteRequests.Add(document);
+        _semaphore.Release();
+        
         TryExecute();
     }
 
     public void DeleteMultiple(IEnumerable<T> documents)
     {
+        _semaphore.Wait();
         _deleteRequests.AddRange(documents);
+        _semaphore.Release();
+        
         TryExecute();
     }
 
-    public Task DeleteAsync(T document)
+    public async Task DeleteAsync(T document)
     {
+        await _semaphore.WaitAsync();
         _deleteRequests.Add(document);
-        return TryExecuteAsync();
+        _semaphore.Release();
+        
+        await TryExecuteAsync();
     }
 
-    public Task DeleteMultipleAsync(IEnumerable<T> documents)
+    public async Task DeleteMultipleAsync(IEnumerable<T> documents)
     {
+        await _semaphore.WaitAsync();
         _deleteRequests.AddRange(documents);
-        return TryExecuteAsync();
+        _semaphore.Release();
+        
+        await TryExecuteAsync();
     }
 
     private void TryExecute(bool force = false)
@@ -98,16 +123,24 @@ public class MongoTransaction<T> : IMongoTransaction<T>
         if(!_insertRequests.Any() && !_deleteRequests.Any()) return;
         if(!force && CurrentCount < _limit) return;
 
-        if (_insertRequests.Any())
+        _semaphore.Wait();
+        try
         {
-            Repo.InsertOrUpdateMany(_insertRequests);
-            _insertRequests.Clear();
-        }
+            if (_insertRequests.Any())
+            {
+                Repo.InsertOrUpdateMany(_insertRequests);
+                _insertRequests.Clear();
+            }
 
-        if (_deleteRequests.Any())
+            if (_deleteRequests.Any())
+            {
+                Repo.DeleteMany(_deleteRequests);
+                _deleteRequests.Clear();
+            }
+        }
+        finally
         {
-            Repo.DeleteMany(_deleteRequests);
-            _deleteRequests.Clear();
+            _semaphore.Release();
         }
     }
 
@@ -116,22 +149,40 @@ public class MongoTransaction<T> : IMongoTransaction<T>
         if(!_insertRequests.Any() && !_deleteRequests.Any()) return;
         if(!force && CurrentCount < _limit) return;
 
-        if (_insertRequests.Any())
+        await _semaphore.WaitAsync();
+        try
         {
-            await Repo.InsertOrUpdateManyAsync(_insertRequests);
-            _insertRequests.Clear();
-        }
+            if (_insertRequests.Any())
+            {
+                await Repo.InsertOrUpdateManyAsync(_insertRequests);
+                _insertRequests.Clear();
+            }
 
-        if (_deleteRequests.Any())
+            if (_deleteRequests.Any())
+            {
+                await Repo.DeleteManyAsync(_deleteRequests);
+                _deleteRequests.Clear();
+            }
+        }
+        finally
         {
-            await Repo.DeleteManyAsync(_deleteRequests);
-            _deleteRequests.Clear();
+            _semaphore.Release();
         }
     }
 
     public void Finish()
         => TryExecute(true);
 
-    public Task FinishAsync()
-        => TryExecuteAsync(true);
+    public async Task FinishAsync()
+    {
+        await TryExecuteAsync(true);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_semaphore is IAsyncDisposable semaphoreAsyncDisposable)
+            await semaphoreAsyncDisposable.DisposeAsync();
+        else
+            _semaphore.Dispose();
+    }
 }
