@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Aco228.Common.Extensions;
 using Aco228.Common.Infrastructure;
+using Aco228.Common.Models;
 using Aco228.MongoDb.Extensions.RepoExtensions;
 using Aco228.MongoDb.Models;
 using Aco228.MongoDb.Services;
@@ -150,6 +151,26 @@ public static class MongoRepoLoadBySpecificationExtensions
         where TDocument : MongoDocument
         where TProjection : class
         => spec.GetCursor().ToEnumerable().ProjectEnumerable(spec);
+    
+    public static async Task<ConcurrentList<TProjection>> ToConcurrentList<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var result = await ToListAsync(spec, filter);
+        return result.ToConcurrentList();
+    }
+    
+    public static async Task<ManagedList<TProjection>> ToManagedList<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, bool>>? filter = null)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var result = await ToListAsync(spec, filter);
+        return result.ToManagedList();
+    }
 
     public static async Task<List<TProjection>> ToListAsync<TDocument, TProjection>(
         this LoadSpecification<TDocument, TProjection> spec,
