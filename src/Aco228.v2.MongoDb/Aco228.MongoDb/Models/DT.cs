@@ -13,4 +13,7 @@ public static class DT
     public static long ToDtAddMinutes(int minutes)
         => DateTime.UtcNow.AddMinutes(minutes).ToUnixTimestampMilliseconds();
 
+    public static long ToDtAddSeconds(int seconds)
+        => DateTime.UtcNow.AddSeconds(seconds).ToUnixTimestampMilliseconds();
+
 }
