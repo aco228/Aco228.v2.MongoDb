@@ -17,6 +17,15 @@ public abstract class MongoDocument : MongoDocumentInternal
     public long UpdatedUtc { get; set; } = DT.GetUnix();
 
     internal virtual bool CanBeDeleted { get; } = true;
+
+    protected virtual void OnBeforeSave() { }
+    
+    internal void BeforeSave()
+    {
+        OnBeforeSave();
+    }   
+    
+
 }
 
 [Serializable]

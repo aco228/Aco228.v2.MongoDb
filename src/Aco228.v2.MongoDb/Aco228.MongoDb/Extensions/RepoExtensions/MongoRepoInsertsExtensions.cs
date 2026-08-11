@@ -20,6 +20,7 @@ public static class MongoRepoInsertsExtensions
             return;
         }
         
+        document.BeforeSave();
         if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return;
         
@@ -55,6 +56,7 @@ public static class MongoRepoInsertsExtensions
             return await repo.UpdateFieldsAsync(document);
         }
         
+        document.BeforeSave();
         if(!document.ShouldUpdateIfThereIsTrackingOrChanges())
             return document;
         
@@ -83,6 +85,7 @@ public static class MongoRepoInsertsExtensions
         var operations = new List<WriteModel<TDocument>>();
         foreach (var document in mongoDocuments)
         {
+            document.BeforeSave();
             if (document.CheckIfNewAndPrepareForInsert())
             {
                 MongoDocumentExtensions.SetDocumentDefaultValues(document);
@@ -126,6 +129,7 @@ public static class MongoRepoInsertsExtensions
         var current = new List<TDocument>();
         foreach (var document in documents)
         {
+            document.BeforeSave();
             current.Add(document);
             if (current.Count >= perBatch)
             {
@@ -150,6 +154,7 @@ public static class MongoRepoInsertsExtensions
         
         foreach (var document in mongoDocuments)
         {
+            document.BeforeSave();
             if (document.CheckIfNewAndPrepareForInsert())
             {
                 MongoDocumentExtensions.SetDocumentDefaultValues(document);
