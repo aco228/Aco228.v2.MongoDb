@@ -178,6 +178,12 @@ public class MongoTransaction<T> : IMongoTransaction<T>
         await TryExecuteAsync(true);
     }
 
+    public async Task FinishAndDisposeAsync()
+    {
+        await FinishAsync();
+        await DisposeAsync();
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_semaphore is IAsyncDisposable semaphoreAsyncDisposable)
