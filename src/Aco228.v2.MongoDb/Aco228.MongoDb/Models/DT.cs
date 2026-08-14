@@ -4,6 +4,13 @@ namespace Aco228.MongoDb.Models;
 
 public static class DT
 {
+    
+    public static DateTime GetDateTimeUtcToday()
+        => DateTime.UtcNow.Date;
+
+    public static long GetUtcToday()
+        => GetDateTimeUtcToday().ToUnixTimestampSeconds();
+    
     public static long GetUnix()
         => DateTime.UtcNow.ToUnixTimestampMilliseconds();
     
