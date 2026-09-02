@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using Aco228.MongoDb.Models.Attributes;
+using MessagePack;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Aco228.MongoDb.Models;
