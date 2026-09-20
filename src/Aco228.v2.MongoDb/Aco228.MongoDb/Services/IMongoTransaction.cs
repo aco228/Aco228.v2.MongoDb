@@ -23,6 +23,7 @@ public interface IMongoTransaction<T> : IAsyncDisposable
 
     void Finish();
     Task FinishAsync();
+    Task FinishAndDisposeAsync();
 }
 
 public class MongoTransaction<T> : IMongoTransaction<T>
