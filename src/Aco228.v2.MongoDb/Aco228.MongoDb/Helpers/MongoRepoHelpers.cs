@@ -111,9 +111,9 @@ public static class MongoRepoHelpers
                 {
                     await MongoIndexesExtensions.ConfigureIndexes(dbContext, documentType);
                 }
-                catch
+                catch (Exception e)
                 {
-                    Console.WriteLine($"Error configuring indexes for: {documentType.FullName}");
+                    Console.WriteLine($"Error configuring indexes for: {documentType.FullName}: {e.Message}");
                 }
             }
         });
