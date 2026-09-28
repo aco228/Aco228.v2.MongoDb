@@ -45,6 +45,31 @@ public static class MongoRepoInsertsExtensions
         }
     }
 
+    /// <summary>
+    /// Bulk version of <see cref="TryInsertOrUpdateAsync{TDocument}"/>: inserts the new documents and updates the
+    /// existing ones in one unordered bulk write. Documents rejected by a unique index (duplicate key) are skipped,
+    /// and the rest are still written. Returns false only when something else failed, never throws.
+    /// </summary>
+    public static async Task<bool> TryInsertOrUpdateManyAsync<TDocument>(this IMongoRepo<TDocument> repo, IEnumerable<TDocument> documents)
+        where TDocument : MongoDocument
+    {
+        try
+        {
+            await InsertOrUpdateManyAsync(repo, documents);
+            return true;
+        }
+        catch (MongoBulkWriteException e) when (e.WriteConcernError == null
+                                                && e.WriteErrors.All(x => x.Category == ServerErrorCategory.DuplicateKey))
+        {
+            // Unordered: every document without a conflict was written, only the duplicates were skipped.
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     public static async Task<TDocument> InsertOrUpdateAsync<TDocument>(this IMongoRepo<TDocument> repo, TDocument document)
         where TDocument : MongoDocument
     {
