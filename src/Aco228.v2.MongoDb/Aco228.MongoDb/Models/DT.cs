@@ -31,18 +31,9 @@ public static class DT
     public static uint GetPartialUnixSec()
         => DateTime.UtcNow.ToPartialSec();
 
-    /// <summary>
-    /// Milliseconds since 2026-01-01 UTC.
-    /// WARNING: uint ms only covers ~49.7 days (until ~2026-02-19). Throws OverflowException after that.
-    /// </summary>
-    public static uint GetPartialUnixMs()
-        => DateTime.UtcNow.ToPartialMs();
-
     public static uint ToPartialSec(this DateTime dt)
         => checked((uint)((AsUtc(dt).Ticks - Epoch.Ticks) / TimeSpan.TicksPerSecond));
 
-    public static uint ToPartialMs(this DateTime dt)
-        => checked((uint)((AsUtc(dt).Ticks - Epoch.Ticks) / TimeSpan.TicksPerMillisecond));
 
     public static DateTime FromPartialSec(uint seconds)
         => Epoch.AddSeconds(seconds);
