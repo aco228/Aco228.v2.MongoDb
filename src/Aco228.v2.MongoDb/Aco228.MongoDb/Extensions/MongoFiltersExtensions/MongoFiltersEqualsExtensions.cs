@@ -151,7 +151,26 @@ public static class MongoFiltersEqualsExtensions
             Builders<TDocument>.Filter.Exists(name, false),
             Builders<TDocument>.Filter.Eq(name, BsonNull.Value)
         );
-        
+
+        spec.FilterDefinitions.Add(filter);
+        return spec;
+    }
+
+    // Raw BSON on purpose: Filter.Eq(name, BsonNull.Value) on a string field is rendered as the text "BsonNull".
+    // { field: null } also matches documents where the field is missing.
+    public static LoadSpecification<TDocument, TProjection> IsNullOrEmpty<TDocument, TProjection>(
+        this LoadSpecification<TDocument, TProjection> spec,
+        Expression<Func<TDocument, string?>> selector)
+        where TDocument : MongoDocument
+        where TProjection : class
+    {
+        var name = selector.GetName();
+        var filter = new BsonDocumentFilterDefinition<TDocument>(new BsonDocument("$or", new BsonArray
+        {
+            new BsonDocument(name, BsonNull.Value),
+            new BsonDocument(name, string.Empty),
+        }));
+
         spec.FilterDefinitions.Add(filter);
         return spec;
     }
